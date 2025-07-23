@@ -1,0 +1,149 @@
+<div style="background-color: black;">
+<canvas id="bruh_canvas" style="height:100%; image-rendering: pixelated;"></canvas>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+
+
+
+var ctx = document.getElementById("bruh_canvas").getContext('2d', { alpha: true });
+
+var memory = null;
+var key_translation = {
+    ["PrintScreen"] : 23,
+    ["ScrollLock"]  : 24,
+    ["Pause"] : 25,
+
+    ["Backspace"] : 8,
+    ["Tab"] : 9,
+    ["Enter"] : 10,
+    ["CapsLock"] : 26,
+    ["Escape"] : 27,
+    ["Meta"] : 28,
+
+    [" "] : 32,
+
+    ["!"] : 49,
+    ["@"] : 50,
+    ["#"] : 51,
+    ["$"] : 52,
+    ["%"] : 53,
+    ["^"] : 54,
+    ["&"] : 55,
+    ["*"] : 56,
+    ["("] : 57,
+    [")"] : 48,
+
+    ["_"] : 45,
+    ["+"] : 43,
+    ["{"] : 123,
+    ["|"] : 124,
+    ["}"] : 125,
+    [":"] : 59,
+    ["\""]: 34,
+    ["<"] : 44,
+    [">"] : 46,
+    ["?"] : 47,
+
+    ["Insert"] : 33,
+    ["Home"] : 34,
+    ["PageUp"] : 35,
+    ["Delete"] : 36,
+    ["End"] : 37,
+    ["PageDown"] : 38,
+
+    ["Shift"] : 0x29,
+    ["Control"] : 0x2a,
+    ["Alt"] : 0x2c,
+
+    ["ArrowLeft"] : 60,
+    ["ArrowRight"] : 62,
+    ["ArrowUp"] : 94,
+    ["ArrowDown"] : 118,
+
+    ["NumLock"] : 39,
+};
+var importObject = {
+    'memory' : new WebAssembly.Memory({'initial' : 162}),
+
+    internal_bruh_test(log) {
+        console.log(log);
+    },
+
+    internal_bruh_startup_js(keyboard_ptr, kbp_size) {
+        for(i = 1; i <= 12; i++)    //  F1 to F12
+            key_translation['F' + i] = 10 + i;
+        for(i = 45; i <= 57; i++)   //  - to 9
+            key_translation[String.fromCharCode(i)] = i;
+        for(i = 65; i <= 93; i++)   //  A to ]
+            key_translation[String.fromCharCode(i)] = i;
+        for(i = 97; i <= 122; i++)   //  a to z
+            key_translation[String.fromCharCode(i)] = i - 32;
+
+        var keyboard;
+        keyboard = new Int32Array(memory.buffer, keyboard_ptr, kbp_size);
+
+        addEventListener("keydown", (event) => {
+            event.preventDefault();
+
+            if(event.repeat)
+                return;
+            keyboard[key_translation[event.key]] = 1;
+            keyboard[0] = key_translation[event.key];
+            
+            if(event.key.length == 1)
+                keyboard[1] = event.key.charCodeAt(0);
+            if(event.key == "Backspace")
+                keyboard[1] = 8;
+            if(event.key == "Tab")
+                keyboard[1] = 9;
+            if(event.key == "Enter")
+                keyboard[1] = 10;
+        });
+        addEventListener("keyup", (event) => {
+            keyboard[key_translation[event.key]] = -1;
+        });
+    },
+
+    internal_bruh_resize(w, h) {
+        ctx.canvas.width = w;
+        ctx.canvas.height = h;
+    },
+
+    internal_bruh_output(buffer, w, h) {
+        var bruh_screen = new ImageData(
+                new Uint8ClampedArray(
+                memory.subarray(buffer, buffer + w * h * 4)), w, h);
+        ctx.putImageData(bruh_screen, 0, 0);
+    },
+};
+memory = new Uint8Array(importObject.memory.buffer);
+
+
+
+var bruh_main = {};
+function wasm_main(ms_time) {
+    if(bruh_main(ms_time) != -1)
+        requestAnimationFrame(wasm_main);
+}
+
+
+
+var xhrOverride = new XMLHttpRequest();
+xhrOverride.responseType = 'arraybuffer';
+
+var exports = $.ajax({
+    url: 'a.wasm',
+    method: 'GET',
+    xhr: function() {
+        return xhrOverride;
+    },
+}).then(function(data){
+    WebAssembly.instantiate(data, {'env': importObject})
+    .then(results => {
+        bruh_main = results.instance.exports._start;
+        requestAnimationFrame(wasm_main);
+    });
+});
+</script>
