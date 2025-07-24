@@ -1,15 +1,21 @@
-<div style="background-color: black;">
-<canvas id="bruh_canvas" style="height:100%; image-rendering: pixelated;"></canvas>
+<style>
+div {
+    color: grey;
+    font-size: 20px;
+    padding-left: 10px;
+}
+</style>
+
+<div id="div" style="background-color: black;">
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
 
-
-
-var ctx = document.getElementById("bruh_canvas").getContext('2d', { alpha: true });
-
+var ctx = null;
+var all_files = [];
 var memory = null;
+
 var key_translation = {
     ["PrintScreen"] : 23,
     ["ScrollLock"]  : 24,
@@ -64,6 +70,7 @@ var key_translation = {
 
     ["NumLock"] : 39,
 };
+
 var importObject = {
     internal_bruh_test(log) {
         console.log(log);
@@ -127,25 +134,73 @@ function wasm_main(ms_time) {
 
 
 
-var xhrOverride = new XMLHttpRequest();
-xhrOverride.responseType = 'arraybuffer';
+var pending_requests = 0;
+const div = document.getElementById("div");
 
-var exports = $.ajax({
-    url: 'a.wasm',
-    method: 'GET',
-    xhr: function() {
-        return xhrOverride;
-    },
-}).then(function(data){
-    WebAssembly.instantiate(data, {'env': importObject})
-    .then(results => {
-        bruh_main = results.instance.exports._start;
-        requestAnimationFrame(wasm_main);
-        memory = new Uint8Array(results.instance.exports.memory.buffer);
-    });
-});
+div.innerHTML +=
+    "<div id='download' style='font-size: 30px;'>\
+    Downloading game files:</div>";
+div.innerHTML +=
+    "<div id='file_list.txt'>\
+    > file_list.txt</h2>";
 
 $.ajax({
-    url: 'files.txt'
-})
+    url: 'file_list.txt',
+    dataType: 'text',
+    error: () => {
+        document.getElementById('file_list.txt').style.color = "red";
+        div.innerHTML +=
+            "<div style='color: red;'>\
+            > ERROR: Unable to download file_list.txt</div>";
+    },
+}).then((res) => {
+    document.getElementById('file_list.txt').style.color = "green";
+
+
+    res.split("\n").forEach(file => {
+        file = file.trim();
+        if(file) {
+            pending_requests++;
+            div.innerHTML +=
+                "<div id='"+file+"' style='color: gray; padding-left: 10px;'>> " + file + "</div>";
+            
+            $.when($.ajax({
+                url: file,
+                xhr: () => {
+                    var xhrOverride = new XMLHttpRequest();
+                    xhrOverride.responseType = 'arraybuffer';
+                    return xhrOverride;
+                },
+                error: () => {
+                    document.getElementById(file).style.color = "red";
+                    div.innerHTML +=
+                    "<div style='color: red;'>\
+                    > ERROR: Unable to download " + file + "</div>";
+                },
+            })).then((res) => {
+                pending_requests--;
+                document.getElementById(file).style.color = "green";
+
+                all_files[file] = res;
+
+                if(pending_requests == 0) {
+                    document.getElementById('download').style.color = "green";
+
+                    WebAssembly.instantiate(
+                        all_files['game.wasm'],
+                        {env: importObject},
+                    ).then((res) => {
+                        div.innerHTML =
+                            "<canvas id='canvas' style='height:100%; image-rendering: pixelated;'></canvas>"
+                        ctx = document.getElementById("canvas").getContext('2d', { alpha: false });
+
+                        bruh_main = res.instance.exports._start;
+                        memory = new Uint8Array(res.instance.exports.memory.buffer);
+                        requestAnimationFrame(wasm_main);
+                    });
+                }
+            });
+        }
+    });
+});
 </script>
