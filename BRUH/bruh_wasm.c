@@ -10,9 +10,8 @@ struct {
 
     //  bruh_
     bruh bruh;
-    bruh_settings set;
-
     sprite screen;
+    bruh_settings set;
 } v = {
 };
 
@@ -104,7 +103,7 @@ void bruh_set(bruh* bruh, bruh_settings settings) {
             v.screen.size = v.set.resolution;
         else
             v.screen.size = v2di(0, 0);
-        v.screen.skip = v.screen.size.w;
+        v.screen.real_width = v.screen.size.w;
     }
     bruh->screen = v.screen;
 
@@ -154,10 +153,10 @@ ulong FilePos(void);
 ulong FileSize(void);
 
 
-pixel rgb3(uchar r, uchar g, uchar b) {
+pixel Rgb3(uchar r, uchar g, uchar b) {
     return (pixel){(255 << 24) + (b << 16) + (g << 8) + (r << 0)};
 }
-uint  color(pixel p) {
+uint  Color(pixel p) {
     uchar r = p.raw >> 0, g = p.raw >> 8, b = p.raw >> 16;
     return (r << 16) + (g << 8) + (b << 0);
 }

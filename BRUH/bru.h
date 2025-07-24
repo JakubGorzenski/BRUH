@@ -6,13 +6,13 @@
 #define BRUH_LIB
 
 //  macros
-#define BRUH_BEGIN(bruh) sint bruh_main(bruh, sint bruh_state) { switch(bruh_state) { case 0
+#define BRUH_MAIN(bruh) bruh_main(bruh, sint bruh_state) { switch(bruh_state) case 0:
 #define BRUH_YIELD return __LINE__; case __LINE__
 #define BRUH_ON_CLOSE case -1
-#define BRUH_END } return -1; }
+#define BRUH_END return -1; }
 
 #define UNUSED(var) (void)var
-#define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).skip])
+#define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).real_width])
 
 #define v2di(x, y) (v2di){{x, y}}
 #define v2diVV(a, op, b) (v2di){{a.x op b.x, a.y op b.y}}
@@ -57,7 +57,7 @@ typedef struct {
     pixel* buffer;
     v2di   start;
     v2di   size;
-    sint   skip; //  when iterating over buffer use this insted of size.w
+    sint   real_width;
 } sprite;
 typedef struct {
     float* buffer;
@@ -164,8 +164,8 @@ ulong FilePos(void);
 ulong FileSize(void);
 
 
-pixel rgb3(uchar r, uchar g, uchar b);
-uint  color(pixel p);
+pixel Rgb3(uchar r, uchar g, uchar b);
+uint  Color(pixel p);
 
 
 double time_between_calls(bool set_zero);
@@ -173,7 +173,7 @@ double time_between_calls(bool set_zero);
 
 
 //  bruh.c
-pixel rgb(uint rgb);
+pixel Rgb(uint rgb);
 
 
 v2di v2diMin(v2di a, v2di b);

@@ -9,13 +9,13 @@
 //  fix with spr_move/spr_size ? maybe ?
 //  or remove bc useless?
 /*sprite SprFlip(sprite spr) {   
-    spr.buffer += spr.skip * (spr.size.h - 1);
-    spr.skip = -spr.skip;
+    spr.buffer += spr.real_width * (spr.size.h - 1);
+    spr.real_width = -spr.real_width;
     return spr;
 }*/
-pixel rgb(uint rgb) {
+pixel Rgb(uint rgb) {
     uchar r = rgb >> 16, g = rgb >> 8, b = rgb >> 0;
-    return rgb3(r, g, b);
+    return Rgb3(r, g, b);
 }
 
 
@@ -46,10 +46,9 @@ bool is_inside(v2di p, v2di pos, v2di size) {
 
 
 sprite SprMove(sprite spr, v2di pos) {
-    //SprSize(spr, v2diVV(spr.size, -, pos));
     spr.size = v2diVV(spr.size, -, pos);
     spr.start = v2diMax(v2diVV(spr.start, -, pos), v2di(0, 0));
-    spr.buffer += pos.x + pos.y * spr.skip;
+    spr.buffer += pos.x + pos.y * spr.real_width;
     return spr;
 }
 sprite SprSize(sprite spr, v2di size) {
