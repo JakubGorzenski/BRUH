@@ -15,7 +15,7 @@ struct {
     cstr exe_path;
 
     //  bruh_
-    bruh* bruh;
+    bruh bruh;
     bruh_settings set;
 
     bool cold_start;
@@ -28,7 +28,7 @@ struct {
     v2di margin;
     uchar key_translation[256];
 } v = {
-    .bruh = &(struct bruh){0},
+    .bruh = (bruh){0},
     .cold_start = true,
     .key_translation = {
         [VK_OEM_3] = '`',
@@ -125,31 +125,31 @@ LRESULT internal_bruh_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam)
                 v.screen.size = new_size;
             else
                 v.screen.size = v2di(0, 0);
-            v.screen.skip = v.screen.size.w;
+            v.screen.real_width = v.screen.size.w;
         }
         v.margin.x = (LOWORD(lParam) - v.screen.size.width * v.set.scale) / 2;
         v.margin.y = (HIWORD(lParam) - v.screen.size.height * v.set.scale) / 2;
         return 0;
     } case WM_LBUTTONDOWN: {
-        v.bruh->in[KEY_MouseLeft] = 1;
-        v.bruh->in[KEY_Pressed] = KEY_MouseLeft;
+        v.bruh.in[KEY_MouseLeft] = 1;
+        v.bruh.in[KEY_Pressed] = KEY_MouseLeft;
         return 0;
     case WM_LBUTTONUP:
-        v.bruh->in[KEY_MouseLeft] = -1;
+        v.bruh.in[KEY_MouseLeft] = -1;
         return 0;
     case WM_MBUTTONDOWN:
-        v.bruh->in[KEY_MouseMiddle] = 1;
-        v.bruh->in[KEY_Pressed] = KEY_MouseMiddle;
+        v.bruh.in[KEY_MouseMiddle] = 1;
+        v.bruh.in[KEY_Pressed] = KEY_MouseMiddle;
         return 0;
     case WM_MBUTTONUP:
-        v.bruh->in[KEY_MouseMiddle] = -1;
+        v.bruh.in[KEY_MouseMiddle] = -1;
         return 0;
     case WM_RBUTTONDOWN:
-        v.bruh->in[KEY_MouseRight] = 1;
-        v.bruh->in[KEY_Pressed] = KEY_MouseRight;
+        v.bruh.in[KEY_MouseRight] = 1;
+        v.bruh.in[KEY_Pressed] = KEY_MouseRight;
         return 0;
     case WM_RBUTTONUP:
-        v.bruh->in[KEY_MouseRight] = -1;
+        v.bruh.in[KEY_MouseRight] = -1;
         return 0;
     } case WM_KEYDOWN: {
     case WM_SYSKEYDOWN:
@@ -162,13 +162,13 @@ LRESULT internal_bruh_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam)
         case KEY_Alt:
         case KEY_Ctrl:
         case KEY_Shift:
-            v.bruh->in[KEY_Mod] |= key;
+            v.bruh.in[KEY_Mod] |= key;
             break;
         default:
             break;
         }
-        v.bruh->in[key] = 1;
-        v.bruh->in[KEY_Pressed] = key;
+        v.bruh.in[key] = 1;
+        v.bruh.in[KEY_Pressed] = key;
         return 0;
     } case WM_KEYUP: {
     case WM_SYSKEYUP:
@@ -179,34 +179,35 @@ LRESULT internal_bruh_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam)
         case KEY_Alt:
         case KEY_Ctrl:
         case KEY_Shift:
-            v.bruh->in[KEY_Mod] &= ~key;
-            if(v.bruh->in[KEY_Mod])
-                v.bruh->in[KEY_Mod] |= 0x70;
+            v.bruh.in[KEY_Mod] &= ~key;
+            if(v.bruh.in[KEY_Mod])
+                v.bruh.in[KEY_Mod] |= 0x70;
             break;
         default:
             break;
         }
-        v.bruh->in[key] = -1;
+        v.bruh.in[key] = -1;
         return 0;
     } case WM_CHAR: {
         switch(wParam) {
         case '\b':
-            v.bruh->in[KEY_Text] = KEY_Backspace;
+            v.bruh.in[KEY_Text] = KEY_Backspace;
             break;
         case '\t':
-            v.bruh->in[KEY_Text] = KEY_Tab;
+            v.bruh.in[KEY_Text] = KEY_Tab;
             break;
         case '\r':
-            v.bruh->in[KEY_Text] = KEY_Enter;
+            v.bruh.in[KEY_Text] = KEY_Enter;
             break;
         default:
             if(wParam >= ' ' && wParam <= '~')
-                v.bruh->in[KEY_Text] = wParam;
+                v.bruh.in[KEY_Text] = wParam;
             break;
         }
         return 0;
     } case WM_CLOSE: {
-        v.bruh->rq_quit = true;
+        if(bruh_main(&v.bruh, -1) == -1) //  implement this better ??
+            exit(0);
     } default: {
         return DefWindowProcA(win, Msg, wParam, lParam);
     }}
@@ -214,7 +215,136 @@ LRESULT internal_bruh_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 
 
-bruh* bruh_start(bruh_settings settings) {
+int main() {
+    {   //  start
+    LARGE_INTEGER counter_freq = {0};
+    QueryPerformanceFrequency(&counter_freq);
+    v.counter_freq = counter_freq.QuadPart;
+
+
+    DWORD file_name_size = GetCurrentDirectory(0, NULL);
+    v.exe_path = MemGet(file_name_size);
+    GetCurrentDirectory(file_name_size, v.exe_path);
+
+
+    for(int i = '\b'; i <= ']'; i++) {
+        if(!v.key_translation[i])
+            v.key_translation[i] = i;
+    }
+
+
+    WNDCLASSA win_class = {
+        .style          = CS_HREDRAW | CS_VREDRAW,
+        .lpfnWndProc    = &internal_bruh_win_proc,
+        .hInstance      = GetModuleHandleA(NULL),
+        .hCursor        = LoadCursor(NULL, IDC_ARROW),
+        .hbrBackground  = CreateSolidBrush(RGB(0, 0, 0)),
+        .lpszClassName  = "win_class",
+    };
+    RegisterClassA(&win_class);   // can error
+
+    win_class.hbrBackground = CreateSolidBrush(RGB(255, 0, 255));
+    win_class.lpszClassName = "win_class_dbg";
+    RegisterClassA(&win_class);   // can error
+    }
+    sint state = 0;
+    while(state != -1) {
+        {   //  keyboard + msg
+            v.bruh.in[KEY_Pressed] = 0;
+            v.bruh.in[KEY_Text] = 0;
+            for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++)
+                    v.bruh.in[i] += v.bruh.in[i] != 0;
+
+
+            MSG msg;
+            while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+                TranslateMessage(&msg);
+                DispatchMessageA(&msg);
+            }
+            v.bruh.screen = v.screen;
+        }
+        {   //  mouse
+            POINT p;
+            GetCursorPos(&p);
+            ScreenToClient(v.window, &p);
+
+            v2di pc_mouse = v2diVV(p, -, v.margin);
+            v.bruh.mouse = v2diVN(pc_mouse, /, v.set.scale);
+            v.bruh.mouse.x -= pc_mouse.x < 0;
+            v.bruh.mouse.y -= pc_mouse.y < 0;
+
+
+            bool show_cursor = !v.set.hide_cursor;
+            if(v2diVN(pc_mouse, <, 0).all_bits)
+                show_cursor = true;
+            if(v2diVV(v.bruh.mouse, >=, v.screen.size).all_bits)
+                show_cursor = true;
+
+            static sint cursor = 0;
+            if(cursor + 1 != show_cursor)
+                cursor = ShowCursor(show_cursor);
+        }
+        state = bruh_main(&v.bruh, state);   //  <== user code
+        {   //  wait for frame
+            static ulong past_time = 0;
+            LARGE_INTEGER current_time = {0};
+            QueryPerformanceCounter(&current_time);
+
+            ulong target_time = past_time + v.frame_delta;
+            slong sleep_ms = (slong)(target_time - current_time.QuadPart) * 1000.0 / v.counter_freq;
+            sleep_ms -= 1;
+
+            if(sleep_ms > 0)
+                Sleep(sleep_ms);
+            while((ulong)current_time.QuadPart <= target_time)
+                QueryPerformanceCounter(&current_time);
+
+            past_time = current_time.QuadPart;
+        }
+        {   //  output
+        BITMAPINFO bm_info = {
+            .bmiHeader = {
+                .biSize = sizeof(bm_info.bmiHeader),
+                .biWidth = v.screen.size.width,
+                .biHeight = -v.screen.size.height,  //  negative bc windows wierd
+                .biBitCount = 32,
+                .biCompression = BI_RGB,
+                .biPlanes = 1,
+        }};
+        HDC DC = GetDC(v.window);
+
+        StretchDIBits(
+            DC,
+            v.margin.x, v.margin.y, v.screen.size.w * v.set.scale, v.screen.size.h * v.set.scale,
+            0, 0, v.screen.size.w, v.screen.size.h,
+            v.screen.buffer, &bm_info, DIB_RGB_COLORS, SRCCOPY);
+        ReleaseDC(v.window, DC);
+        }
+    }
+    {   //  bruh clean up
+    MemFree(v.bruh.screen.buffer);
+
+    MemFree(v.bruh.audio[0].buffer);
+    MemFree(v.bruh.audio[1].buffer);
+    MemFree(v.bruh.audio[2].buffer);
+
+    v.bruh = (bruh){0};
+    v.set = (bruh_settings){0};
+    }
+    {   //  start clean up
+    DestroyWindow(v.window);    //  can error
+
+    UnregisterClassA("win_class", GetModuleHandleA(NULL));  //  can error
+    UnregisterClassA("win_class_dbg", GetModuleHandleA(NULL));  //  can error
+
+    MemFree(v.exe_path);
+    }
+    return 0;
+}
+
+
+
+void bruh_set(bruh* bruh, bruh_settings settings) {
     {   //  load settings
     #define DEFAULT(setting_name, default) if(!settings.setting_name) v.set.setting_name = default
 
@@ -224,39 +354,6 @@ bruh* bruh_start(bruh_settings settings) {
     DEFAULT(fps_cap, 30);
 
     #undef DEFAULT
-    }
-    if(v.cold_start){
-        LARGE_INTEGER counter_freq = {0};
-        QueryPerformanceFrequency(&counter_freq);
-        v.counter_freq = counter_freq.QuadPart;
-
-
-        DWORD file_name_size = GetCurrentDirectory(0, NULL);
-        v.exe_path = MemGet(file_name_size);
-        GetCurrentDirectory(file_name_size, v.exe_path);
-
-
-        for(int i = '\b'; i <= ']'; i++) {
-            if(!v.key_translation[i])
-                v.key_translation[i] = i;
-        }
-
-
-        WNDCLASSA win_class = {
-            .style          = CS_HREDRAW | CS_VREDRAW,
-            .lpfnWndProc    = &internal_bruh_win_proc,
-            .hInstance      = GetModuleHandleA(NULL),
-            .hCursor        = LoadCursor(NULL, IDC_ARROW),
-            .hbrBackground  = CreateSolidBrush(RGB(0, 0, 0)),
-            .lpszClassName  = "win_class",
-        };
-        RegisterClassA(&win_class);   // can error
-
-        win_class.hbrBackground = CreateSolidBrush(RGB(255, 0, 255));
-        win_class.lpszClassName = "win_class_dbg";
-        RegisterClassA(&win_class);   // can error
-
-        v.cold_start = false;
     }
     {   //  warm start
     v.frame_delta = v.counter_freq / v.set.fps_cap;
@@ -269,9 +366,9 @@ bruh* bruh_start(bruh_settings settings) {
             v.screen.size = v.set.resolution;
         else
             v.screen.size = v2di(0, 0);
-        v.screen.skip = v.screen.size.w;
+        v.screen.real_width = v.screen.size.w;
     }
-    v.bruh->screen = v.screen;
+    bruh->screen = v.screen;
 
 
     if(v.window)
@@ -290,99 +387,6 @@ bruh* bruh_start(bruh_settings settings) {
         GetModuleHandleA(NULL),
         NULL);
     }
-    return v.bruh;
-}
-void  bruh_yield(bruh* bruh) {
-    {   //  output
-    BITMAPINFO bm_info = {
-        .bmiHeader = {
-            .biSize = sizeof(bm_info.bmiHeader),
-            .biWidth = v.screen.size.width,
-            .biHeight = -v.screen.size.height,  //  negative bc windows wierd
-            .biBitCount = 32,
-            .biCompression = BI_RGB,
-            .biPlanes = 1,
-    }};
-    HDC DC = GetDC(v.window);
-
-    StretchDIBits(
-        DC,
-        v.margin.x, v.margin.y, v.screen.size.w * v.set.scale, v.screen.size.h * v.set.scale,
-        0, 0, v.screen.size.w, v.screen.size.h,
-        v.screen.buffer, &bm_info, DIB_RGB_COLORS, SRCCOPY);
-    ReleaseDC(v.window, DC);
-    }
-    {   //  wait for frame
-    static ulong past_time = 0;
-    LARGE_INTEGER current_time = {0};
-    QueryPerformanceCounter(&current_time);
-
-    ulong target_time = past_time + v.frame_delta;
-    slong sleep_ms = (slong)(target_time - current_time.QuadPart) * 1000.0 / v.counter_freq;
-    sleep_ms -= 1;
-
-    if(sleep_ms > 0)
-        Sleep(sleep_ms);
-    while((ulong)current_time.QuadPart <= target_time)
-        QueryPerformanceCounter(&current_time);
-
-    past_time = current_time.QuadPart;
-    }
-    {   //  mouse
-    POINT p;
-    GetCursorPos(&p);
-    ScreenToClient(v.window, &p);
-
-    v2di pc_mouse = v2diVV(p, -, v.margin);
-    bruh->mouse = v2diVN(pc_mouse, /, v.set.scale);
-    bruh->mouse.x -= pc_mouse.x < 0;
-    bruh->mouse.y -= pc_mouse.y < 0;
-
-
-    bool show_cursor = !v.set.hide_cursor;
-    if(v2diVN(pc_mouse, <, 0).all_bits)
-        show_cursor = true;
-    if(v2diVV(bruh->mouse, >=, v.screen.size).all_bits)
-        show_cursor = true;
-
-    static sint cursor = 0;
-    if(cursor + 1 != show_cursor)
-        cursor = ShowCursor(show_cursor);
-    }
-    {   //  keyboard + msg
-    bruh->in[KEY_Pressed] = 0;
-    bruh->in[KEY_Text] = 0;
-    for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++)
-            bruh->in[i] += bruh->in[i] != 0;
-
-
-    MSG msg;
-    while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-        TranslateMessage(&msg);
-        DispatchMessageA(&msg);
-    }
-    bruh->screen = v.screen;
-    }
-}
-void  bruh_stop(bruh* bruh) {
-    {   //  bruh clean up
-    MemFree(bruh->screen.buffer);
-
-    MemFree(bruh->audio[0].buffer);
-    MemFree(bruh->audio[1].buffer);
-    MemFree(bruh->audio[2].buffer);
-
-    *bruh = (struct bruh){0};
-    }
-    {   //  start clean up
-    DestroyWindow(v.window);    //  can error
-
-    UnregisterClassA("win_class", GetModuleHandleA(NULL));  //  can error
-    UnregisterClassA("win_class_dbg", GetModuleHandleA(NULL));  //  can error
-
-    MemFree(v.exe_path);
-    }
-    v.cold_start = true;
 }
 
 
@@ -476,6 +480,14 @@ ulong FileSize(void) {
     LARGE_INTEGER size = {0};
     GetFileSizeEx(v.open_file, &size);
     return size.QuadPart;
+}
+
+
+pixel Rgb3(uchar r, uchar g, uchar b) {
+    return (pixel){(r << 16) + (g << 8) + (b << 0)};
+}
+uint  Color(pixel p) {
+    return p.raw;
 }
 
 

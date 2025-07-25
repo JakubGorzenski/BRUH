@@ -89,8 +89,6 @@ void bruh_set(bruh* bruh, bruh_settings settings) {
     #define DEFAULT(setting_name, default) if(!settings.setting_name) v.set.setting_name = default
 
     v.set = settings;
-    DEFAULT(scale, 1);
-    DEFAULT(fps_cap, 30);
 
     #undef DEFAULT
     }
@@ -109,6 +107,9 @@ void bruh_set(bruh* bruh, bruh_settings settings) {
 
     internal_bruh_resize(v.set.resolution.width, v.set.resolution.height);
     }
+}
+bruh_settings bruh_available_settings() {
+
 }
 
 

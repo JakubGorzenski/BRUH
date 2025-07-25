@@ -15,6 +15,7 @@
 #define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).real_width])
 
 #define v2di(x, y) (v2di){{x, y}}
+#define v2diEQ(a, b) (a.x == b.x && a.y == b.y)
 #define v2diVV(a, op, b) (v2di){{a.x op b.x, a.y op b.y}}
 #define v2diVN(a, op, b) (v2di){{a.x op b, a.y op b}}
 
@@ -135,6 +136,7 @@ enum input_key_values {
 
 //  bruh_os.c
 void bruh_set(bruh* bruh, bruh_settings settings);
+//bruh_settings bruh_available_settings();  //  implement somthing to allow for platform dependent bechavior
 
 
 void* MemGet(ulong size);
