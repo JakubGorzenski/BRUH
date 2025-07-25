@@ -8,8 +8,13 @@
 //  macros
 #define BRUH_MAIN(bruh) bruh_main(bruh, sint bruh_state) { switch(bruh_state) case 0:
 #define BRUH_YIELD return __LINE__; case __LINE__
-#define BRUH_ON_CLOSE case -1
 #define BRUH_END return -1; }
+
+#define BRUH_ON_CLOSE case -1
+
+#define BRUH_ACKNOWLEDGE return 0
+#define BRUH_CLOSE return -1
+
 
 #define UNUSED(var) (void)var
 #define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).real_width])

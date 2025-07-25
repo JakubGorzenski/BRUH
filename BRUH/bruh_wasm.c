@@ -12,6 +12,7 @@ struct {
     bruh bruh;
     sprite screen;
     bruh_settings set;
+    //sint msg_to_user;   //  not used currently
 } v = {
 };
 
@@ -43,7 +44,7 @@ void internal_bruh_output(pixel* buffer, sint w, sint h);
 int _start(int ms_time) {
     UNUSED(ms_time);
 
-    static int state = 0;
+    static sint state = 0;
     if(state == 0) {    //  set up
         internal_bruh_startup_js(v.bruh.in, 128);
     }
@@ -57,10 +58,17 @@ int _start(int ms_time) {
     v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Ctrl] > 0 ? KEY_Ctrl : 0;
     v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Alt] > 0 ? KEY_Alt : 0;
     }
-    
+    {   //  run user code
     v.bruh.screen = v.screen;
-    state = bruh_main(&v.bruh, state);  //  <== user code
-
+    sint state_out = 0;
+    /*if(v.msg_to_user) {
+        state_out = bruh_main(&v.bruh, v.msg_to_user);
+        v.msg_to_user = 0;
+    }*/
+    if(!state_out)
+        state_out = bruh_main(&v.bruh, state);
+    state = state_out;
+    }
     {   //  keyboard cleanup
     v.bruh.in[KEY_Pressed] = 0;
     v.bruh.in[KEY_Text] = 0;
@@ -75,8 +83,6 @@ int _start(int ms_time) {
         MemFree(v.bruh.audio[0].buffer);
         MemFree(v.bruh.audio[1].buffer);
         MemFree(v.bruh.audio[2].buffer);
-
-        v.bruh = (bruh){0};
     }
     return state;
 }
@@ -109,7 +115,7 @@ void bruh_set(bruh* bruh, bruh_settings settings) {
     }
 }
 bruh_settings bruh_available_settings() {
-
+    return (bruh_settings){0};
 }
 
 

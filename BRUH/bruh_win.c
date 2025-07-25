@@ -17,6 +17,7 @@ struct {
     //  bruh_
     bruh bruh;
     bruh_settings set;
+    sint msg_to_user;
 
     bool cold_start;
     HWND window;
@@ -206,8 +207,8 @@ LRESULT internal_bruh_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam)
         }
         return 0;
     } case WM_CLOSE: {
-        if(bruh_main(&v.bruh, -1) == -1) //  implement this better ??
-            exit(0);
+        v.msg_to_user = -1;
+        return 0;
     } default: {
         return DefWindowProcA(win, Msg, wParam, lParam);
     }}
@@ -255,7 +256,6 @@ int main() {
             for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++)
                     v.bruh.in[i] += v.bruh.in[i] != 0;
 
-
             MSG msg;
             while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
                 TranslateMessage(&msg);
@@ -263,7 +263,7 @@ int main() {
             }
             v.bruh.screen = v.screen;
         }
-        {   //  mouse
+        {   //  mouse position
             POINT p;
             GetCursorPos(&p);
             ScreenToClient(v.window, &p);
@@ -284,7 +284,16 @@ int main() {
             if(cursor + 1 != show_cursor)
                 cursor = ShowCursor(show_cursor);
         }
-        state = bruh_main(&v.bruh, state);   //  <== user code
+        {   //  run user code
+        sint state_out = 0;
+        if(v.msg_to_user) {
+            state_out = bruh_main(&v.bruh, v.msg_to_user);
+            v.msg_to_user = 0;
+        }
+        if(!state_out)
+            state_out = bruh_main(&v.bruh, state);
+        state = state_out;
+        }
         {   //  wait for frame
             static ulong past_time = 0;
             LARGE_INTEGER current_time = {0};
@@ -327,9 +336,6 @@ int main() {
     MemFree(v.bruh.audio[0].buffer);
     MemFree(v.bruh.audio[1].buffer);
     MemFree(v.bruh.audio[2].buffer);
-
-    v.bruh = (bruh){0};
-    v.set = (bruh_settings){0};
     }
     {   //  start clean up
     DestroyWindow(v.window);    //  can error
