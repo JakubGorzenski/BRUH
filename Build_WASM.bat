@@ -6,8 +6,7 @@ pause
 cls
 
 cd tmp
-del ..\a.zip
-echo game.wasm > file_list.txt
+del ..\a.zip > file_list.txt
 
 FOR %%i IN (%*) DO (
     IF "%%~xi"==".c" (
