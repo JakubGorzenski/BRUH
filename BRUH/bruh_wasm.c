@@ -2,18 +2,34 @@
 #include "bru.h"
 
 
+
+#define v_page_header internal_bruh_page_header
+typedef struct v_page_header {
+    uint size;
+    struct v_page_header* next;
+} v_page_header;
+
+
 #define v internal_bruh
 struct {
     //  file_
 
     //  directory_
-
+    //  Mem
+    const uint page_size;
+    //                   0x100000 - 1 MB
+    v_page_header memory[0x110000 / sizeof(v_page_header) + sizeof(v_page_header)];
     //  bruh_
     bruh bruh;
     sprite screen;
     bruh_settings set;
     //sint msg_to_user;   //  not used currently
 } v = {
+    .page_size = 0x110,
+    .memory = {
+        [0] = {.next = &v.memory[1]},
+        [1] = {.size = sizeof(v.memory) - sizeof(v_page_header)},
+    },
 };
 
 
@@ -119,20 +135,67 @@ bruh_settings bruh_available_settings() {
 }
 
 
-void* MemGet(ulong size) {
-    #define MAX_ALLOC (1024 * 1024 * 10)   //  10 MB of memory
-    static uchar memory[MAX_ALLOC];
-    static ulong ptr = 0;
-    ulong old_ptr = ptr;
-    ptr += size;
-    if(ptr >= MAX_ALLOC)
+
+
+void* MemGet(uint size) {
+    if(size == 0)
         return NULL;
-    return memory + old_ptr;
+
+    v_page_header *priv, *curr = v.memory;
+    size += sizeof(v_page_header);
+    size = ((size - 1) / v.page_size + 1) * v.page_size;    //  round up size to v.page_size
+
+    while(curr->size < size) {  //  find node which can fit the allocation
+        priv = curr;
+        if(curr)
+            curr = curr->next;
+        else
+            return NULL;
+    }
+
+    priv->next += size / sizeof(v_page_header);
+    curr->size -= size;
+    if(curr->size > 1)
+        *(priv->next) = *curr;  //  make new node
+    else
+        priv->next = curr->next;
+
+    *curr = (v_page_header){.size = size};
+    return curr + 1;
 }
 void  MemFree(void* memory) {
-    UNUSED(memory);
+    if(!memory)
+        return;
+    
+    v_page_header* curr = memory;
+    curr -= 1;
+
+    v_page_header *priv, *next = v.memory;
+    while(curr > next) {    //  find nodes surrounding current node
+        priv = next;
+        if(next->next)
+            next = next->next;
+        else
+            next = curr;
+    }
+
+    //  insert current node
+    priv->next = curr;
+    curr->next = next;
+    if(curr + curr->size / sizeof(v_page_header) == next) {   //  merge with next node if adjacent
+        curr->size += next->size;
+        curr->next = next->next;
+
+        *next = (v_page_header){0};
+    }
+    if(curr == priv + priv->size / sizeof(v_page_header)) {   //  merge with previous node if adjacent
+        priv->size += curr->size;
+        priv->next = curr->next;
+
+        *curr = (v_page_header){0};
+    }
 }
-void* MemTemp(ulong size) {
+void* MemTemp(uint size) {
     UNUSED(size);
     return NULL;
 }

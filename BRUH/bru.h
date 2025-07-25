@@ -144,9 +144,10 @@ void bruh_set(bruh* bruh, bruh_settings settings);
 //bruh_settings bruh_available_settings();  //  implement somthing to allow for platform dependent bechavior
 
 
-void* MemGet(ulong size);
+
+void* MemGet(uint size);
 void  MemFree(void* memory);
-void* MemTemp(ulong size);
+void* MemTemp(uint size);
 
 
 bool directory_create(cstr path);
