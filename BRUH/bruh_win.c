@@ -397,13 +397,13 @@ void bruh_set(bruh* bruh, bruh_settings settings) {
 
 
 
-void* MemGet(uint size) {
+void* MemGet(ulong size) {
     return malloc(size);
 }
 void  MemFree(void* memory) {
     free(memory);
 }
-void* MemTemp(uint size);
+void* MemTemp(ulong size);
 
 
 bool directory_create(cstr name) {

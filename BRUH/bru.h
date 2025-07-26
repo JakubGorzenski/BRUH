@@ -145,9 +145,9 @@ void bruh_set(bruh* bruh, bruh_settings settings);
 
 
 
-void* MemGet(uint size);
+void* MemGet(ulong size);
 void  MemFree(void* memory);
-void* MemTemp(uint size);
+void* MemTemp(ulong size);
 
 
 bool directory_create(cstr path);

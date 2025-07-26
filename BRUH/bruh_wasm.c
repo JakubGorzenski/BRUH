@@ -20,11 +20,13 @@ struct {
     //                   0x100000 - 1 MB
     v_page_header memory[0x110000 / sizeof(v_page_header) + sizeof(v_page_header)];
     //  bruh_
+    bool startup;
     bruh bruh;
     sprite screen;
     bruh_settings set;
     //sint msg_to_user;   //  not used currently
 } v = {
+    .startup = true;
     .page_size = 0x110,
     .memory = {
         [0] = {.next = &v.memory[1]},
@@ -61,8 +63,10 @@ int _start(int ms_time) {
     UNUSED(ms_time);
 
     static sint state = 0;
-    if(state == 0) {    //  set up
+
+    if(v.startup) {
         internal_bruh_startup_js(v.bruh.in, 128);
+        v.startup = false;
     }
     {   //  generate frame
     {   //  keyboard
@@ -136,8 +140,7 @@ bruh_settings bruh_available_settings() {
 
 
 
-
-void* MemGet(uint size) {
+void* MemGet(ulong size) {
     if(size == 0)
         return NULL;
 
@@ -195,7 +198,7 @@ void  MemFree(void* memory) {
         *curr = (v_page_header){0};
     }
 }
-void* MemTemp(uint size) {
+void* MemTemp(ulong size) {
     UNUSED(size);
     return NULL;
 }
