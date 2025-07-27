@@ -3,11 +3,11 @@
 
 
 
-#define v_page_header internal_bruh_page_header
-typedef struct v_page_header {
+#define v_PAGE_HEADER internal_bruh_page_header
+typedef struct v_PAGE_HEADER {
     uint size;
-    struct v_page_header* next;
-} v_page_header;
+    struct v_PAGE_HEADER* next;
+} v_PAGE_HEADER;
 
 
 #define v internal_bruh
@@ -17,8 +17,7 @@ struct {
     //  directory_
     //  Mem
     const uint page_size;
-    //                   0x100000 - 1 MB
-    v_page_header memory[0x110000 / sizeof(v_page_header) + sizeof(v_page_header)];
+    v_PAGE_HEADER* memory;
     //  bruh_
     bool startup;
     bruh bruh;
@@ -26,12 +25,8 @@ struct {
     bruh_settings set;
     //sint msg_to_user;   //  not used currently
 } v = {
-    .startup = true;
+    .startup = true,
     .page_size = 0x110,
-    .memory = {
-        [0] = {.next = &v.memory[1]},
-        [1] = {.size = sizeof(v.memory) - sizeof(v_page_header)},
-    },
 };
 
 
@@ -59,17 +54,25 @@ void internal_bruh_output(pixel* buffer, sint w, sint h);
 
 
 //  functions to JS
+#define v_EXPORT __attribute__((visibility("default")))
+
+v_EXPORT
+void internal_bruh_startup(int heap_start_in_pages, int heap_size_in_pages) {
+    v.memory = (v_PAGE_HEADER*)(heap_start_in_pages * 65536);
+
+    v.memory[0] = (v_PAGE_HEADER){.next = &v.memory[1]};
+    v.memory[1] = (v_PAGE_HEADER){.size = heap_size_in_pages * 65536 - sizeof(v_PAGE_HEADER)};
+    
+    internal_bruh_startup_js(v.bruh.in, 128);
+}
+
+v_EXPORT
 int _start(int ms_time) {
     UNUSED(ms_time);
 
     static sint state = 0;
-
-    if(v.startup) {
-        internal_bruh_startup_js(v.bruh.in, 128);
-        v.startup = false;
-    }
     {   //  generate frame
-    {   //  keyboard
+    {   //  keyboard update
     for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++)
         v.bruh.in[i] += v.bruh.in[i] != 0;
 
@@ -89,7 +92,7 @@ int _start(int ms_time) {
         state_out = bruh_main(&v.bruh, state);
     state = state_out;
     }
-    {   //  keyboard cleanup
+    {   //  keyboard reset
     v.bruh.in[KEY_Pressed] = 0;
     v.bruh.in[KEY_Text] = 0;
     }
@@ -97,15 +100,18 @@ int _start(int ms_time) {
 
     internal_bruh_output(v.screen.buffer, v.screen.size.width, v.screen.size.height);
 
-    if(state == -1) {   //  clean up
-        MemFree(v.bruh.screen.buffer);
-
-        MemFree(v.bruh.audio[0].buffer);
-        MemFree(v.bruh.audio[1].buffer);
-        MemFree(v.bruh.audio[2].buffer);
-    }
     return state;
 }
+
+v_EXPORT
+void internal_bruh_cleanup(void) {
+    MemFree(v.bruh.screen.buffer);
+
+    MemFree(v.bruh.audio[0].buffer);
+    MemFree(v.bruh.audio[1].buffer);
+    MemFree(v.bruh.audio[2].buffer);
+}
+#undef v_EXPORT
 
 
 
@@ -144,8 +150,8 @@ void* MemGet(ulong size) {
     if(size == 0)
         return NULL;
 
-    v_page_header *priv, *curr = v.memory;
-    size += sizeof(v_page_header);
+    v_PAGE_HEADER *priv, *curr = v.memory;
+    size += sizeof(v_PAGE_HEADER);
     size = ((size - 1) / v.page_size + 1) * v.page_size;    //  round up size to v.page_size
 
     while(curr->size < size) {  //  find node which can fit the allocation
@@ -156,24 +162,24 @@ void* MemGet(ulong size) {
             return NULL;
     }
 
-    priv->next += size / sizeof(v_page_header);
+    priv->next += size / sizeof(v_PAGE_HEADER);
     curr->size -= size;
     if(curr->size > 1)
         *(priv->next) = *curr;  //  make new node
     else
         priv->next = curr->next;
 
-    *curr = (v_page_header){.size = size};
+    *curr = (v_PAGE_HEADER){.size = size};
     return curr + 1;
 }
 void  MemFree(void* memory) {
     if(!memory)
         return;
     
-    v_page_header* curr = memory;
+    v_PAGE_HEADER* curr = memory;
     curr -= 1;
 
-    v_page_header *priv, *next = v.memory;
+    v_PAGE_HEADER *priv, *next = v.memory;
     while(curr > next) {    //  find nodes surrounding current node
         priv = next;
         if(next->next)
@@ -185,17 +191,17 @@ void  MemFree(void* memory) {
     //  insert current node
     priv->next = curr;
     curr->next = next;
-    if(curr + curr->size / sizeof(v_page_header) == next) {   //  merge with next node if adjacent
+    if(curr + curr->size / sizeof(v_PAGE_HEADER) == next) {   //  merge with next node if adjacent
         curr->size += next->size;
         curr->next = next->next;
 
-        *next = (v_page_header){0};
+        *next = (v_PAGE_HEADER){0};
     }
-    if(curr == priv + priv->size / sizeof(v_page_header)) {   //  merge with previous node if adjacent
+    if(curr == priv + priv->size / sizeof(v_PAGE_HEADER)) {   //  merge with previous node if adjacent
         priv->size += curr->size;
         priv->next = curr->next;
 
-        *curr = (v_page_header){0};
+        *curr = (v_PAGE_HEADER){0};
     }
 }
 void* MemTemp(ulong size) {
@@ -238,3 +244,4 @@ uint  Color(pixel p) {
 double time_between_calls(bool set_zero);
 
 #undef v
+#undef v_PAGE_HEADER

@@ -22,7 +22,7 @@ llvm-link a.bc b.bc -o a.bc
 opt -O3 a.bc -o a.bc
 llc -O3 -filetype=obj a.bc -o a.o
 rem wasm-ld a.o -o a.wasm --no-entry --export-dynamic --allow-undefined 
-wasm-ld a.o -o game.wasm --strip-all --allow-undefined
+wasm-ld a.o -o game.wasm --strip-all --allow-undefined --export-dynamic
 rem --import-memory
 
 7z a ..\a.zip ..\BRUH\WASM\index.html game.wasm file_list.txt > nul

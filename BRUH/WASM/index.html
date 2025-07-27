@@ -126,10 +126,13 @@ var importObject = {
 
 
 
-var bruh_main = {};
-function wasm_main(ms_time) {
+var bruh_main;
+var bruh_cleanup;
+function js_main(ms_time) {
     if(bruh_main(ms_time) != -1)
-        requestAnimationFrame(wasm_main);
+        requestAnimationFrame(js_main);
+    else
+        bruh_cleanup();
 }
 
 
@@ -178,13 +181,22 @@ function start_wasm_if_all_downloads_complete() {
         all_files['game.wasm'],
         { env: importObject },
     ).then((res) => {
+        var old_size = res.instance.exports.memory.grow(0);
+        var grow_ret = res.instance.exports.memory.grow(65536 - old_size);
+        var new_size = res.instance.exports.memory.grow(0);
+        console.log(old_size, grow_ret, new_size);
+
+        memory = new Uint8Array(res.instance.exports.memory.buffer);
+
+        res.instance.exports.internal_bruh_startup(old_size, new_size - old_size);
+
+        bruh_main = res.instance.exports._start;
+        bruh_cleanup = res.instance.exports.internal_bruh_cleanup;
+
         div.innerHTML =
             "<canvas id='canvas' style='height:100%; image-rendering: pixelated;'></canvas>"
         ctx = document.getElementById("canvas").getContext('2d', { alpha: false });
-
-        bruh_main = res.instance.exports._start;
-        memory = new Uint8Array(res.instance.exports.memory.buffer);
-        requestAnimationFrame(wasm_main);
+        requestAnimationFrame(js_main);
     });
 }
 
