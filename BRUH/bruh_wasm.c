@@ -47,7 +47,6 @@ void internal_bruh_test(int log);
 void internal_bruh_startup_js(sint* buffer, int buffer_size);
 
 void internal_bruh_resize(sint w, sint h);
-sint internal_bruh_in_buffer_fill(void);
 
 void internal_bruh_output(pixel* buffer, sint w, sint h);
 
@@ -65,7 +64,6 @@ void internal_bruh_startup(int heap_start_in_pages, int heap_size_in_pages) {
     
     internal_bruh_startup_js(v.bruh.in, 128);
 }
-
 v_EXPORT
 int _start(int ms_time) {
     UNUSED(ms_time);
@@ -102,7 +100,6 @@ int _start(int ms_time) {
 
     return state;
 }
-
 v_EXPORT
 void internal_bruh_cleanup(void) {
     MemFree(v.bruh.screen.buffer);
@@ -242,6 +239,8 @@ uint  Color(pixel p) {
 
 
 double time_between_calls(bool set_zero);
+
+
 
 #undef v
 #undef v_PAGE_HEADER

@@ -7,7 +7,7 @@
 
 //  macros
 #define BRUH_MAIN(bruh) bruh_main(bruh, sint bruh_state) { switch(bruh_state) case 0:
-#define BRUH_YIELD return __LINE__; case __LINE__
+#define BRUH_YIELD do {return __LINE__; case __LINE__:} while(0)
 #define BRUH_END return -1; }
 
 #define BRUH_ON_CLOSE case -1
@@ -17,19 +17,17 @@
 
 
 #define UNUSED(var) (void)var
-#define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).real_width])
 
-#define v2di(x, y) (v2di){{x, y}}
-#define v2diEQ(a, b) (a.x == b.x && a.y == b.y)
-#define v2diVV(a, op, b) (v2di){{a.x op b.x, a.y op b.y}}
-#define v2diVN(a, op, b) (v2di){{a.x op b, a.y op b}}
+#define v2di(x, y) (v2di){{(x), (y)}}
+#define v2diVV(a, op, b) (v2di){{(a.x) op (b.x), (a.y) op (b.y)}}
+#define v2diVN(a, op, b) (v2di){{(a.x) op (b), (a.y) op (b)}}
 
 //#define v2df(x, y) (v2f){{x, y}}
 //#define v2dfVV(a, op, b) v2f(a.x op b.x, a.y op b.y)
 //#define v2dfVN(a, op, b) v2f(a.x op b, a.y op b)
 
 
-#define NULL 0
+#define NULL (void*)0
 
 //  data types
 typedef unsigned char       uchar;
@@ -188,6 +186,7 @@ v2di v2diMin(v2di a, v2di b);
 v2di v2diMax(v2di a, v2di b);
 v2di v2diClamp(v2di min, v2di val, v2di max);
 
+bool v2di_equal(v2di a, v2di b);
 bool is_inside(v2di p, v2di pos, v2di size);
 
 
@@ -200,6 +199,8 @@ sprite SprCutR(sprite* spr, sint cut_by);
 sprite SprCutT(sprite* spr, sint cut_by);
 sprite SprCutB(sprite* spr, sint cut_by);
 
+
+pixel* get_pixel(sprite spr, sint x, sint y);
 
 void draw_pixel(sprite out, v2di pos, pixel color);
 void draw_fill(sprite out, pixel color);

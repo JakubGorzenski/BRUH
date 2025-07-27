@@ -87,15 +87,19 @@ sprite SprCutB(sprite* spr, sint cut_by) {
 }
 
 
+pixel* get_pixel(sprite spr, sint x, sint y) {
+    return &spr.buffer[x + y * spr.real_width];
+}
+
 void draw_pixel(sprite out, v2di pos, pixel color) {
     if(is_inside(pos, out.start, out.size)) {
-        GET_PIXEL(out, pos.x, pos.y) = color;
+        *get_pixel(out, pos.x, pos.y) = color;
     }
 }
 void draw_fill(sprite out, pixel color) {
     for(sint y = out.start.y; y < out.size.h; y++)
     for(sint x = out.start.x; x < out.size.w; x++) {
-        GET_PIXEL(out, x, y) = color;
+        *get_pixel(out, x, y) = color;
     }
 }
 void draw_spr(sprite out, sprite in) {
@@ -104,7 +108,7 @@ void draw_spr(sprite out, sprite in) {
 
     for(sint y = start.y; y < size.h; y++)
     for(sint x = start.x; x < size.w; x++) {
-        GET_PIXEL(out, x, y) = GET_PIXEL(in, x, y);
+        *get_pixel(out, x, y) = *get_pixel(in, x, y);
     }
 }
 /*void draw_text(sprite out, uint color, cstr str) {
@@ -129,21 +133,21 @@ void draw_spr(sprite out, sprite in) {
         if(c >= 95)
             continue;
         ushort data = font[c];
-        if(data & 040000) GET_PIXEL(out, 0 + x, 0 + y) = color;
-        if(data & 020000) GET_PIXEL(out, 1 + x, 0 + y) = color;
-        if(data & 010000) GET_PIXEL(out, 2 + x, 0 + y) = color;
-        if(data & 004000) GET_PIXEL(out, 0 + x, 1 + y) = color;
-        if(data & 002000) GET_PIXEL(out, 1 + x, 1 + y) = color;
-        if(data & 001000) GET_PIXEL(out, 2 + x, 1 + y) = color;
-        if(data & 000400) GET_PIXEL(out, 0 + x, 2 + y) = color;
-        if(data & 000200) GET_PIXEL(out, 1 + x, 2 + y) = color;
-        if(data & 000100) GET_PIXEL(out, 2 + x, 2 + y) = color;
-        if(data & 000040) GET_PIXEL(out, 0 + x, 3 + y) = color;
-        if(data & 000020) GET_PIXEL(out, 1 + x, 3 + y) = color;
-        if(data & 000010) GET_PIXEL(out, 2 + x, 3 + y) = color;
-        if(data & 000004) GET_PIXEL(out, 0 + x, 4 + y) = color;
-        if(data & 000002) GET_PIXEL(out, 1 + x, 4 + y) = color;
-        if(data & 000001) GET_PIXEL(out, 2 + x, 4 + y) = color;
+        if(data & 040000) *get_pixel(out, 0 + x, 0 + y) = color;
+        if(data & 020000) *get_pixel(out, 1 + x, 0 + y) = color;
+        if(data & 010000) *get_pixel(out, 2 + x, 0 + y) = color;
+        if(data & 004000) *get_pixel(out, 0 + x, 1 + y) = color;
+        if(data & 002000) *get_pixel(out, 1 + x, 1 + y) = color;
+        if(data & 001000) *get_pixel(out, 2 + x, 1 + y) = color;
+        if(data & 000400) *get_pixel(out, 0 + x, 2 + y) = color;
+        if(data & 000200) *get_pixel(out, 1 + x, 2 + y) = color;
+        if(data & 000100) *get_pixel(out, 2 + x, 2 + y) = color;
+        if(data & 000040) *get_pixel(out, 0 + x, 3 + y) = color;
+        if(data & 000020) *get_pixel(out, 1 + x, 3 + y) = color;
+        if(data & 000010) *get_pixel(out, 2 + x, 3 + y) = color;
+        if(data & 000004) *get_pixel(out, 0 + x, 4 + y) = color;
+        if(data & 000002) *get_pixel(out, 1 + x, 4 + y) = color;
+        if(data & 000001) *get_pixel(out, 2 + x, 4 + y) = color;
         x += 4;
         if(x + 2 >= out.size.w) {
             y += 6;
