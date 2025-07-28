@@ -364,7 +364,7 @@ void bruh_set(bruh* bruh, bruh_settings settings) {
     v.set = settings;
     DEFAULT(window_title, "bruh_application");
     DEFAULT(scale, 1);
-    DEFAULT(fps_cap, 30);
+    DEFAULT(fps_cap, 60);
 
     #undef DEFAULT
     }
