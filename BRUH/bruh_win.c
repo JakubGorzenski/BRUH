@@ -499,7 +499,7 @@ ulong FileSize(void) {
 pixel Rgb3(uchar r, uchar g, uchar b) {
     return (pixel){(r << 16) + (g << 8) + (b << 0)};
 }
-uint  Color(pixel p) {
+uint  RgbFrom(pixel p) {
     return p.raw;
 }
 

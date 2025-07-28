@@ -182,7 +182,7 @@ ulong FileSize(void);
 
 
 pixel Rgb3(uchar r, uchar g, uchar b);
-uint  Color(pixel p);
+uint  RgbFrom(pixel p);
 
 
 double time_between_calls_ms(bool set_zero);
