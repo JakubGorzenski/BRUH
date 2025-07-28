@@ -17,6 +17,7 @@
 
 
 #define UNUSED(var) (void)var
+#define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).real_width])
 
 #define v2di(x, y) (v2di){{(x), (y)}}
 #define v2diVV(a, op, b) (v2di){{(a.x) op (b.x), (a.y) op (b.y)}}
@@ -209,8 +210,6 @@ sprite SprCutR(sprite* spr, sint cut_by);
 sprite SprCutT(sprite* spr, sint cut_by);
 sprite SprCutB(sprite* spr, sint cut_by);
 
-
-pixel* get_pixel(sprite spr, sint x, sint y);
 
 void draw_pixel(sprite out, v2di pos, pixel color);
 void draw_fill(sprite out, pixel color);
