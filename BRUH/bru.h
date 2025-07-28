@@ -82,57 +82,67 @@ typedef struct bruh {
     sound audio[3];
 
     //  inputs
+    uint delta_ms;
     sint in[128];
     v2di mouse;
 } bruh;
 
 enum input_key_values {
-    KEY_Pressed,    //  id of a pressed key
     KEY_Text,   //  typed in char
     KEY_Mod,    //  input[KEY_Mod] == KEY_Shift | KEY_Ctrl | KEY_Alt
 
     KEY_MouseLeft, KEY_MouseMiddle, KEY_MouseRight,
-    //KEY_MouseBack, KEY_MouseForward,
-    //  7
-
-    KEY_F1 = 11, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12,
-    KEY_PrintScreen,
-    KEY_ScrollLock,
-    KEY_PauseBreak, //  25
+    //KEY_MouseBack,
+    //KEY_MouseForward,     //  6
 
     KEY_Backspace = '\b',   //  8
     KEY_Tab = '\t',         //  9
     KEY_Enter = '\n',       //  10
-    KEY_CapsLock = 26,
-    KEY_Esc,    //  27
-    KEY_Windows,    //  28
+    KEY_F1 = 11, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12,
+    KEY_PrintScreen,        //  23
+    KEY_ScrollLock,
+    KEY_PauseBreak,
+    KEY_CapsLock,
+    KEY_Esc,
+    KEY_Windows,            //  28
 
-    KEY_Space = ' ',    //  32
-
+    KEY_Space = ' ',        //  32
     KEY_Insert,
     KEY_Home,
     KEY_PageUp,
     KEY_Delete,
     KEY_End,
-    KEY_PageDown,   //  38
+    KEY_PageDown,
+    KEY_NumLock,            //  39
 
-    KEY_Shift = 0x29,   //0b00101001
-    KEY_Ctrl = 0x2a,    //0b00101010
-    KEY_Alt = 0x2c,     //0b00101100
+    KEY_Shift = 0x29,       //  41  0b00101001
+    KEY_Ctrl = 0x2a,        //  42  0b00101010
+    KEY_Alt = 0x2c,         //  44  0b00101100
+                            //  '-' 45 -> 'A' 65 -> 'Z' 90 -> ']' 93
+                            //  '.' 46
+                            //  '/' 47
+                            //  '0' - '9' 48 - 57
 
-//  '-' 45 -> 'A' 65 -> 'Z' 90 -> ']' 93
+                            //  ';' 59
     KEY_ArrowLeft = '<',    //  60
+                            //  '=' 61
     KEY_ArrowRight = '>',   //  62
-    KEY_ArrowUp = '^',      //  94
-    KEY_ArrowDown = 'v',    //  118
+    KEY_Pressed = '?',      //  63 id of a pressed key
 
-    KEY_NumLock = 39,
+                            //  'A' - 'Z' 65 - 90
+                            //  '[' 91
+                            //  '\' 92
+                            //  ']' 93
+    KEY_ArrowUp = '^',      //  94
     KEY_NumDiv = 95,
     KEY_NumMul,
     KEY_NumSub,
     KEY_NumAdd,
-    KEY_NumDel, //  99
+    KEY_NumDel,             //  99
     KEY_Num0 = 100, KEY_Num1, KEY_Num2, KEY_Num3, KEY_Num4, KEY_Num5, KEY_Num6, KEY_Num7, KEY_Num8, KEY_Num9,
+                            //  110
+
+    KEY_ArrowDown = 'v',    //  118
 };
 
 

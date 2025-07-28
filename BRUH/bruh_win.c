@@ -251,38 +251,43 @@ int main() {
     sint state = 0;
     while(state != -1) {
         {   //  keyboard + msg
-            v.bruh.in[KEY_Pressed] = 0;
-            v.bruh.in[KEY_Text] = 0;
-            for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++)
-                    v.bruh.in[i] += v.bruh.in[i] != 0;
+        v.bruh.in[KEY_Pressed] = 0;
+        v.bruh.in[KEY_Text] = 0;
 
-            MSG msg;
-            while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
-                TranslateMessage(&msg);
-                DispatchMessageA(&msg);
-            }
-            v.bruh.screen = v.screen;
+        for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++) {
+            if(v.bruh.in[i] > 0)
+                v.bruh.in[i] += v.bruh.delta_ms;
+            else
+                v.bruh.in[i] = 0;
+        }
+
+        MSG msg;
+        while(PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+        v.bruh.screen = v.screen;
         }
         {   //  mouse position
-            POINT p;
-            GetCursorPos(&p);
-            ScreenToClient(v.window, &p);
+        POINT p;
+        GetCursorPos(&p);
+        ScreenToClient(v.window, &p);
 
-            v2di pc_mouse = v2diVV(p, -, v.margin);
-            v.bruh.mouse = v2diVN(pc_mouse, /, v.set.scale);
-            v.bruh.mouse.x -= pc_mouse.x < 0;
-            v.bruh.mouse.y -= pc_mouse.y < 0;
+        v2di pc_mouse = v2diVV(p, -, v.margin);
+        v.bruh.mouse = v2diVN(pc_mouse, /, v.set.scale);
+        v.bruh.mouse.x -= pc_mouse.x < 0;
+        v.bruh.mouse.y -= pc_mouse.y < 0;
 
 
-            bool show_cursor = !v.set.hide_cursor;
-            if(v2diVN(pc_mouse, <, 0).all_bits)
-                show_cursor = true;
-            if(v2diVV(v.bruh.mouse, >=, v.screen.size).all_bits)
-                show_cursor = true;
+        bool show_cursor = !v.set.hide_cursor;
+        if(v2diVN(pc_mouse, <, 0).all_bits)
+            show_cursor = true;
+        if(v2diVV(v.bruh.mouse, >=, v.screen.size).all_bits)
+            show_cursor = true;
 
-            static sint cursor = 0;
-            if(cursor + 1 != show_cursor)
-                cursor = ShowCursor(show_cursor);
+        static sint cursor = 0;
+        if(cursor + 1 != show_cursor)
+            cursor = ShowCursor(show_cursor);
         }
         {   //  run user code
         sint state_out = 0;
@@ -295,20 +300,22 @@ int main() {
         state = state_out;
         }
         {   //  wait for frame
-            static ulong past_time = 0;
-            LARGE_INTEGER current_time = {0};
+        static ulong past_time = 0;
+        LARGE_INTEGER current_time = {0};
+        QueryPerformanceCounter(&current_time);
+
+        ulong target_time = past_time + v.frame_delta;
+
+        slong sleep_ms = (slong)(target_time - current_time.QuadPart) * 1000.0 / v.counter_freq;
+
+        if(sleep_ms > 1)
+            Sleep(sleep_ms - 1);
+        while((ulong)current_time.QuadPart <= target_time)
             QueryPerformanceCounter(&current_time);
 
-            ulong target_time = past_time + v.frame_delta;
-            slong sleep_ms = (slong)(target_time - current_time.QuadPart) * 1000.0 / v.counter_freq;
-            sleep_ms -= 1;
+        v.bruh.delta_ms = (slong)(past_time - current_time.QuadPart) * 1000.0 / v.counter_freq;
 
-            if(sleep_ms > 0)
-                Sleep(sleep_ms);
-            while((ulong)current_time.QuadPart <= target_time)
-                QueryPerformanceCounter(&current_time);
-
-            past_time = current_time.QuadPart;
+        past_time = current_time.QuadPart;
         }
         {   //  output
         BITMAPINFO bm_info = {

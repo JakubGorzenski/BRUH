@@ -95,7 +95,7 @@ var importObject = {
             if(event.repeat)
                 return;
             keyboard[key_translation[event.key]] = 1;
-            keyboard[0] = key_translation[event.key];
+            keyboard['?'.charCodeAt(0)] = key_translation[event.key];
             
             if(event.key.length == 1)
                 keyboard[1] = event.key.charCodeAt(0);

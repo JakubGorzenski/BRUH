@@ -15,17 +15,16 @@ struct {
     //  file_
 
     //  directory_
+
     //  Mem
     const uint page_size;
     v_PAGE_HEADER* memory;
     //  bruh_
-    bool startup;
     bruh bruh;
     sprite screen;
     bruh_settings set;
     //sint msg_to_user;   //  not used currently
 } v = {
-    .startup = true,
     .page_size = 0x110,
 };
 
@@ -65,15 +64,11 @@ void internal_bruh_startup(int heap_start_in_pages, int heap_size_in_pages) {
     internal_bruh_startup_js(v.bruh.in, 128);
 }
 v_EXPORT
-int _start(int ms_time) {
-    UNUSED(ms_time);
-
+int _start(int delta_ms) {
     static sint state = 0;
-    {   //  generate frame
-    {   //  keyboard update
-    for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++)
-        v.bruh.in[i] += v.bruh.in[i] != 0;
 
+    v.bruh.delta_ms = delta_ms;
+    {   //  key_mod update
     v.bruh.in[KEY_Mod] = 0;
     v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Shift] > 0 ? KEY_Shift : 0;
     v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Ctrl] > 0 ? KEY_Ctrl : 0;
@@ -90,10 +85,16 @@ int _start(int ms_time) {
         state_out = bruh_main(&v.bruh, state);
     state = state_out;
     }
-    {   //  keyboard reset
+    {   //  keyboard update
+    for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++) {
+        if(v.bruh.in[i] > 0)
+            v.bruh.in[i] += delta_ms;
+        else
+            v.bruh.in[i] = 0;
+    }
+
     v.bruh.in[KEY_Pressed] = 0;
     v.bruh.in[KEY_Text] = 0;
-    }
     }
 
     internal_bruh_output(v.screen.buffer, v.screen.size.width, v.screen.size.height);
