@@ -76,7 +76,9 @@ typedef struct {
     uint  fps_cap;
     bool  hide_cursor;
     bool  debug_color;
-} bruh_settings;
+} bruh_set;
+
+
 typedef struct bruh {
     //  outputs
     sprite screen;
@@ -149,8 +151,8 @@ enum input_key_values {
 
 
 //  bruh_os.c
-void bruh_set(bruh* bruh, bruh_settings settings);
-//bruh_settings bruh_available_settings();  //  implement somthing to allow for platform dependent bechavior
+void bruh_settings(bruh* bruh, bruh_set settings);
+//bruh_set bruh_available_settings();  //  implement somthing to allow for platform dependent bechavior
 
 
 

@@ -16,7 +16,7 @@ struct {
 
     //  bruh_
     bruh bruh;
-    bruh_settings set;
+    bruh_set set;
     sint msg_to_user;
 
     bool cold_start;
@@ -357,7 +357,7 @@ int main() {
 
 
 
-void bruh_set(bruh* bruh, bruh_settings settings) {
+void bruh_settings(bruh* bruh, bruh_set settings) {
     {   //  load settings
     #define DEFAULT(setting_name, default) if(!settings.setting_name) v.set.setting_name = default
 

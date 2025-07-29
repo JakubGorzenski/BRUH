@@ -22,7 +22,7 @@ struct {
     //  bruh_
     bruh bruh;
     sprite screen;
-    bruh_settings set;
+    bruh_set set;
     //sint msg_to_user;   //  not used currently
 } v = {
     .page_size = 0x110,
@@ -114,7 +114,7 @@ void internal_bruh_cleanup(void) {
 
 
 //  function definitions
-void bruh_set(bruh* bruh, bruh_settings settings) {
+void bruh_settings(bruh* bruh, bruh_set settings) {
     {   //  set defaults
     #define DEFAULT(setting_name, default) if(!settings.setting_name) v.set.setting_name = default
 
@@ -138,8 +138,8 @@ void bruh_set(bruh* bruh, bruh_settings settings) {
     internal_bruh_resize(v.set.resolution.width, v.set.resolution.height);
     }
 }
-bruh_settings bruh_available_settings() {
-    return (bruh_settings){0};
+bruh_set bruh_available_settings() {
+    return (bruh_set){0};
 }
 
 
