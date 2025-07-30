@@ -282,51 +282,52 @@ void draw_spr(sprite out, sprite in) {
         GET_PIXEL(out, x, y) = GET_PIXEL(in, x, y);
     }
 }
-/*void draw_text(sprite out, uint color, cstr str) {
-    out = spr_move(out, out.start);
+v2di draw_text(sprite out, cstr text, text_set* settings) {
+    UNUSED(out);
+    UNUSED(text);
+    UNUSED(settings);
 
-    if(out.size.w < 3) return;
-    if(out.size.h < 5) return;
+    return out.size;
+}
+sint draw_char(sprite out, char ch, pixel color, font* used_font) {
+    if(ch < ' ' || ch > '}')
+        return 0;
 
-    ushort font[95] = {
-    000000, 022202, 055000, 057575, 036736, 041241, 024367, 022000, 012221, 042224, 052500, 002720, 000024, 000700, 000002, 011244,
-    075557, 026227, 061247, 061216, 055711, 074616, 074757, 071222, 075757, 075717, 020020, 020022, 012421, 007070, 042124, 061202,
-    075747, 025755, 065656, 034443, 065556, 074647, 074644, 034553, 055755, 072227, 071116, 055655, 044447, 057555, 057755, 025552,
-    065644, 025563, 065655, 034716, 072222, 055557, 055552, 055575, 055255, 055222, 071247, 032223, 044211, 062226, 025000, 000007,
-    042000, 000353, 044656, 000343, 011353, 003743, 012722, 007716, 044655, 020222, 020224, 004565, 022221, 000675, 000655, 00757,
-    006564, 002531, 000564, 000326, 027222, 000556, 000552, 000577, 000525, 000522, 007247, 032423, 022222, 062126, 000471,
-    };
-    uchar c;
-    sint x = 0;
-    sint y = 0;
-    for(uint i = 0; (c = str[i]); i++) {
-        c -= ' ';
-        if(c >= 95)
-            continue;
-        ushort data = font[c];
-        if(data & 040000) GET_PIXEL(out, 0 + x, 0 + y) = color;
-        if(data & 020000) GET_PIXEL(out, 1 + x, 0 + y) = color;
-        if(data & 010000) GET_PIXEL(out, 2 + x, 0 + y) = color;
-        if(data & 004000) GET_PIXEL(out, 0 + x, 1 + y) = color;
-        if(data & 002000) GET_PIXEL(out, 1 + x, 1 + y) = color;
-        if(data & 001000) GET_PIXEL(out, 2 + x, 1 + y) = color;
-        if(data & 000400) GET_PIXEL(out, 0 + x, 2 + y) = color;
-        if(data & 000200) GET_PIXEL(out, 1 + x, 2 + y) = color;
-        if(data & 000100) GET_PIXEL(out, 2 + x, 2 + y) = color;
-        if(data & 000040) GET_PIXEL(out, 0 + x, 3 + y) = color;
-        if(data & 000020) GET_PIXEL(out, 1 + x, 3 + y) = color;
-        if(data & 000010) GET_PIXEL(out, 2 + x, 3 + y) = color;
-        if(data & 000004) GET_PIXEL(out, 0 + x, 4 + y) = color;
-        if(data & 000002) GET_PIXEL(out, 1 + x, 4 + y) = color;
-        if(data & 000001) GET_PIXEL(out, 2 + x, 4 + y) = color;
-        x += 4;
-        if(x + 2 >= out.size.w) {
-            y += 6;
-            x = 0;
-            if(y + 4 >= out.size.h)
-                return;
-        }
-    }
-}*/
+    if(!used_font)
+        used_font = &(font){
+            .line_height = 7,
+            .letter = {
+                //  ' ' -> '/'
+                {3, 7, 0},
+                {1, 2, 0b1'1'1'0'1},
+                {3, 6, 0b101'101},
+                {5, 2, 0b01010'11111'01010'11111'01010},
+                {5, 1, 0b00100'01111'10100'11111'00101'11110'00100},
+                {3, 2, 0b101'001'010'100'101},
+                {5, 2, 0b01000'10100'01101'10010'01101},
+                {1, 6, 0b1'1},
+                {2, 1, 0b01'10'10'10'10'10'01},
+                {2, 1, 0b10'01'01'01'01'01'10},
+                {3, 4, 0b101'010'101},
+                {3, 3, 0b010'111'010},
+                {2, 1, 0b01'10},
+                {3, 4, 0b111},
+                {1, 2, 0b1},
+                {3, 2, 0b001'001'010'100'100},
+            },
+        };
 
+    sint width    = used_font->letter[ch - ' '].width;
+    sint offset_y = used_font->line_height;
+    offset_y     -= used_font->letter[ch - ' '].offset_y;
+    ulong data    = used_font->letter[ch - ' '].data;
 
+    for(sint y = offset_y; data; y--) {
+    for(sint x = width; x > 0 ; x--) {
+        if(data & 1)
+            GET_PIXEL(out, x, y) = color;
+        data >>= 1;
+    }}
+
+    return width;
+}

@@ -69,6 +69,14 @@ typedef struct {
     sint   real_width;
 } sprite;
 typedef struct {
+    sint line_height;
+    struct {
+        sint width;
+        sint offset_y;
+        ulong data;
+    } letter['~' - ' ' + 1];
+} font;
+typedef struct {
     float* buffer;
     uint buffer_size;
 } sound;
@@ -81,6 +89,12 @@ typedef struct {
     bool  hide_cursor;
     bool  debug_color;
 } cgl_set;
+typedef struct {
+    font font;
+    pixel color;
+    bool wrap;
+    bool process_special;
+} text_set;
 
 
 typedef struct cgl {
@@ -239,6 +253,8 @@ sprite SprCutB(sprite* spr, sint cut_by);
 void draw_pixel(sprite out, v2di pos, pixel color);
 void draw_fill(sprite out, pixel color);
 void draw_spr(sprite out, sprite in);
+v2di draw_text(sprite out, cstr text, text_set* settings);
+sint draw_char(sprite out, char ch, pixel color, font* used_font);
 
 
 
