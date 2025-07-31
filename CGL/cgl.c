@@ -282,52 +282,62 @@ void draw_spr(sprite out, sprite in) {
         GET_PIXEL(out, x, y) = GET_PIXEL(in, x, y);
     }
 }
-v2di draw_text(sprite out, cstr text, text_set* settings) {
-    UNUSED(out);
-    UNUSED(text);
-    UNUSED(settings);
+void draw_text(sprite out, cstr text, text_set* settings) {
+    pixel color = settings->color;
+    font* used_font = &settings->font;
 
-    return out.size;
-}
-sint draw_char(sprite out, char ch, pixel color, font* used_font) {
-    if(ch < ' ' || ch > '}')
-        return 0;
-
-    if(!used_font)
+    if(!used_font->line_height) {
         used_font = &(font){
             .line_height = 7,
             .letter = {
                 //  ' ' -> '/'
-                {3, 7, 0},
-                {1, 2, 0b1'1'1'0'1},
-                {3, 6, 0b101'101},
-                {5, 2, 0b01010'11111'01010'11111'01010},
-                {5, 1, 0b00100'01111'10100'11111'00101'11110'00100},
-                {3, 2, 0b101'001'010'100'101},
-                {5, 2, 0b01000'10100'01101'10010'01101},
-                {1, 6, 0b1'1},
-                {2, 1, 0b01'10'10'10'10'10'01},
-                {2, 1, 0b10'01'01'01'01'01'10},
-                {3, 4, 0b101'010'101},
-                {3, 3, 0b010'111'010},
-                {2, 1, 0b01'10},
-                {3, 4, 0b111},
-                {1, 2, 0b1},
-                {3, 2, 0b001'001'010'100'100},
+                {3, -7, 0},
+                {1, -2, 0b1'1'1'0'1},
+                {3, -6, 0b101'101},
+                {5, -2, 0b01010'11111'01010'11111'01010},
+                {5, -1, 0b00100'01111'10100'11111'00101'11110'00100},
+                {3, -2, 0b101'001'010'100'101},
+                {5, -2, 0b01000'10100'01101'10010'01101},
+                {1, -6, 0b1'1},
+                {2, -1, 0b01'10'10'10'10'10'01},
+                {2, -1, 0b10'01'01'01'01'01'10},
+                {3, -4, 0b101'010'101},
+                {3, -3, 0b010'111'010},
+                {2, -1, 0b01'10},
+                {3, -4, 0b111},
+                {1, -2, 0b1},
+                {3, -2, 0b001'001'010'100'100},
             },
         };
+    }
 
-    sint width    = used_font->letter[ch - ' '].width;
-    sint offset_y = used_font->line_height;
-    offset_y     -= used_font->letter[ch - ' '].offset_y;
-    ulong data    = used_font->letter[ch - ' '].data;
+    v2di cursor = v2di(0, used_font->line_height);
 
-    for(sint y = offset_y; data; y--) {
-    for(sint x = width; x > 0 ; x--) {
-        if(data & 1)
-            GET_PIXEL(out, x, y) = color;
-        data >>= 1;
-    }}
+    for(;*text; text++) {
+        if(*text < ' ' || *text > '~')
+            continue;
+        
+        sint width    = used_font->letter[*text - ' '].width;
+        sint offset_y = used_font->letter[*text - ' '].offset_y;
+        ulong data    = used_font->letter[*text - ' '].data;
 
-    return width;
+        if(cursor.x + 1 + width < out.size.w) {
+            
+            for(sint y = offset_y; data; y--) {
+            for(sint x = width - 1; x >= 0 ; x--) {
+                if(data & 1)
+                    GET_PIXEL(out, x + cursor.x, y + cursor.y) = color;
+                data >>= 1;
+            }}
+
+            cursor.x += 1 + width;
+        } else {
+            if(!settings->wrap)
+                return;
+            cursor.x = 0;
+            cursor.y += 1 + used_font->line_height;
+            if(cursor.y > out.size.h)
+                return;
+        }
+    }
 }
