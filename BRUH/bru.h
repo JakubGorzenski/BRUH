@@ -23,6 +23,8 @@
 #define v2diVV(a, op, b) (v2di){{(a.x) op (b.x), (a.y) op (b.y)}}
 #define v2diVN(a, op, b) (v2di){{(a.x) op (b), (a.y) op (b)}}
 
+#define StrCat(alloc, ...) StrCatList(alloc, sizeof((char[]){__VA_ARGS__}), &(string){__VA_ARGS__})
+
 //#define v2df(x, y) (v2f){{x, y}}
 //#define v2dfVV(a, op, b) v2f(a.x op b.x, a.y op b.y)
 //#define v2dfVN(a, op, b) v2f(a.x op b, a.y op b)
@@ -40,6 +42,8 @@ typedef signed   short      sshort;
 typedef signed   int        sint;
 typedef signed   long long  slong;
 
+typedef void*(*alloc)(int size);
+
 typedef char*   cstr;
 
 
@@ -53,9 +57,9 @@ typedef union {
     ulong all_bits;
 } v2di;
 typedef struct {
-    cstr buffer;
-    uint buffer_size;
-    uint length;
+    char* buffer;
+    uint  buffer_size;
+    uint  length;
 } string;
 
 typedef struct {
@@ -193,6 +197,21 @@ double time_between_calls_ms(bool set_zero);
 
 //  bruh.c
 pixel Rgb(uint rgb);
+
+
+string StrC(char* cstr);
+string StrInt(ulong n);
+string StrFloat(double f);
+string StrV2di(v2di p);
+
+string StrNew(alloc alloc, int size);
+string StrAppend(string* out, string append);
+string StrCatList(alloc alloc, uint count, string* str);
+string StrCut(string* str, uint pos);
+string StrSub(string str, uint start, uint length);
+
+uint StrFind(string str, string look_for);
+bool StrIsEqual(string a, string b);
 
 
 v2di v2diMin(v2di a, v2di b);

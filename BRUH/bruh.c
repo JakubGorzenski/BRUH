@@ -19,6 +19,82 @@ pixel Rgb(uint rgb) {
 }
 
 
+string StrC(char* cstr) {
+    string ret = {0};
+
+    ret.buffer = cstr;
+    while(*cstr++)
+        ret.length++;
+
+    return ret;
+}
+string StrInt(ulong n);
+string StrFloat(double f);
+string StrV2di(v2di p);
+
+string StrNew(alloc alloc, int size) {
+    string ret = {0};
+    ret.buffer = alloc(size);
+    ret.buffer_size = size;
+    return ret;
+}
+string StrAppend(string* out, string append) {
+    uint size = out->buffer_size - out->length;
+    size = size > append.length ? append.length : size;
+    for(uint i = 0; i < size; i++)
+        out->buffer[out->length + i] = append.buffer[i];
+    return *out;
+}
+string StrCatList(alloc alloc, uint count, string* str) {
+    uint size = 0;
+    for(uint i = 0; i < count; i++)
+        size += str[i].length;
+    
+    string ret = StrNew(alloc, size);
+    for(uint i = 0; i < count; i++)
+        StrAppend(&ret, str[i]);
+    
+    return ret;
+}
+string StrCut(string* str, uint pos) {
+    string ret = StrSub(*str, 0, pos);
+    *str = StrSub(*str, pos, -1);
+    return ret;
+}
+string StrSub(string str, uint start, uint length) {
+    str.buffer += start;
+    str.buffer_size = 0;
+
+    if(str.length > start)
+        str.length -= start;
+    else
+        str.length = 0;
+
+    if(str.length > length)
+        str.length = length;
+    
+    return str;
+}
+
+uint StrFind(string str, string look_for) {
+    for(uint i = 0; i < str.length; i++)
+        for(uint j = 0; str.buffer[i + j] == look_for.buffer[j]; j++)
+            if(look_for.length <= j + 1)
+                return i;
+    return str.length;
+}
+bool StrIsEqual(string a, string b) {
+    if(a.length != b.length)
+        return false;
+    
+    for(uint i = 0; i < a.length; i++)
+        if(a.buffer[i] != b.buffer[i])
+            return false;
+    
+    return true;
+}
+
+
 v2di v2diMin(v2di a, v2di b) {
     a.x = a.x < b.x ? a.x : b.x;
     a.y = a.y < b.y ? a.y : b.y;
