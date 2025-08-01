@@ -19,6 +19,10 @@ struct {
     //  Mem
     const uint page_size;
     v_PAGE_HEADER* memory;
+
+    uchar* MemTemp_buffer;
+    ulong  MemTemp_size;
+    ulong  MemTemp_ptr;
     //  bruh_
     bruh bruh;
     sprite screen;
@@ -62,6 +66,10 @@ void internal_bruh_startup(int heap_start_in_pages, int heap_size_in_pages) {
     v.memory[1] = (v_PAGE_HEADER){.size = heap_size_in_pages * 65536 - sizeof(v_PAGE_HEADER)};
     
     internal_bruh_startup_js(v.bruh.in, 128);
+
+    //  1 GB for scratch memory (maybe make it dynamically allocated, since we only have 4 GB on wasm)
+    v.MemTemp_buffer = MemGet(1024 * 1024);
+    v.MemTemp_size = 1024 * 1024;
 }
 v_EXPORT
 int _start(int delta_ms) {
@@ -108,6 +116,9 @@ void internal_bruh_cleanup(void) {
     MemFree(v.bruh.audio[0].buffer);
     MemFree(v.bruh.audio[1].buffer);
     MemFree(v.bruh.audio[2].buffer);
+
+    MemFree(v.MemTemp_buffer);
+    v.MemTemp_size = 0;
 }
 #undef v_EXPORT
 
@@ -203,8 +214,12 @@ void  MemFree(void* memory) {
     }
 }
 void* MemTemp(ulong size) {
-    UNUSED(size);
-    return NULL;
+    if(v.MemTemp_ptr + size > v.MemTemp_size)
+        return NULL;
+
+    uchar* ret = v.MemTemp_buffer + v.MemTemp_ptr;
+    v.MemTemp_ptr += size;
+    return ret;
 }
 
 

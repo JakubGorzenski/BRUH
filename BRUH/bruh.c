@@ -35,7 +35,7 @@ v2di v2diClamp(v2di min, v2di val, v2di max) {
     return val;
 }
 bool v2diIsEqual(v2di a, v2di b) {
-    return (a.x == a.b) && (a.y == b.y);
+    return (a.x == b.x) && (a.y == b.y);
 }
 bool v2diIsInside(v2di p, v2di pos, v2di size) {
     p = v2diVV(p, -, pos);

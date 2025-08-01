@@ -14,6 +14,11 @@ struct {
     HANDLE find_handle;
     cstr exe_path;
 
+    //  MemTemp
+    uchar* MemTemp_buffer;
+    ulong  MemTemp_size;
+    ulong  MemTemp_ptr;
+
     //  bruh_
     bruh bruh;
     bruh_set set;
@@ -247,9 +252,14 @@ int main() {
     win_class.hbrBackground = CreateSolidBrush(RGB(255, 0, 255));
     win_class.lpszClassName = "win_class_dbg";
     RegisterClassA(&win_class);   // can error
+
+    //  1 GB for scratch memory
+    v.MemTemp_buffer = MemGet(1024 * 1024);
+    v.MemTemp_size = 1024 * 1024;
     }
     sint state = 0;
     while(state != -1) {
+        v.MemTemp_ptr = 0;
         {   //  keyboard + msg
         v.bruh.in[KEY_Pressed] = 0;
         v.bruh.in[KEY_Text] = 0;
@@ -351,6 +361,9 @@ int main() {
     UnregisterClassA("win_class_dbg", GetModuleHandleA(NULL));  //  can error
 
     MemFree(v.exe_path);
+
+    MemFree(v.MemTemp_buffer);
+    v.MemTemp_size = 0;
     }
     return 0;
 }
@@ -410,7 +423,14 @@ void* MemGet(ulong size) {
 void  MemFree(void* memory) {
     free(memory);
 }
-void* MemTemp(ulong size);
+void* MemTemp(ulong size) {
+    if(v.MemTemp_ptr + size > v.MemTemp_size)
+        return NULL;
+
+    uchar* ret = v.MemTemp_buffer + v.MemTemp_ptr;
+    v.MemTemp_ptr += size;
+    return ret;
+}
 
 
 bool directory_create(cstr name) {
