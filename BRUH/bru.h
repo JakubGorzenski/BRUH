@@ -58,8 +58,8 @@ typedef union {
 } v2di;
 typedef struct {
     char* buffer;
-    uint  buffer_size;
-    uint  length;
+    sint  buffer_size;
+    sint  length;
 } string;
 
 typedef struct {
@@ -200,18 +200,23 @@ pixel Rgb(uint rgb);
 
 
 string StrC(char* cstr);
-string StrInt(ulong n);
+string StrInt(slong n);
 string StrFloat(double f);
 string StrV2di(v2di p);
 
 string StrNew(alloc alloc, int size);
 string StrAppend(string* out, string append);
 string StrCatList(alloc alloc, uint count, string* str);
-string StrCut(string* str, uint pos);
-string StrSub(string str, uint start, uint length);
+string StrCut(string* str, sint pos);
+string StrSub(string str, sint start, sint length);
 
-uint StrFind(string str, string look_for);
+sint StrFind(string str, string look_for);
 bool StrIsEqual(string a, string b);
+
+
+slong IntMin(slong a, slong b);
+slong IntMax(slong a, slong b);
+slong IntClamp(slong min, slong val, slong max);
 
 
 v2di v2diMin(v2di a, v2di b);

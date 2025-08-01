@@ -28,20 +28,22 @@ string StrC(char* cstr) {
 
     return ret;
 }
-string StrInt(ulong n);
+string StrInt(slong n);
 string StrFloat(double f);
 string StrV2di(v2di p);
 
-string StrNew(alloc alloc, int size) {
+string StrNew(alloc alloc, sint size) {
+    if(size <= 0)
+        return StrC("");
     string ret = {0};
     ret.buffer = alloc(size);
     ret.buffer_size = size;
     return ret;
 }
 string StrAppend(string* out, string append) {
-    uint size = out->buffer_size - out->length;
-    size = size > append.length ? append.length : size;
-    for(uint i = 0; i < size; i++)
+    sint size = IntMin(out->buffer_size - out->length, append.length);
+
+    for(sint i = 0; i < size; i++)
         out->buffer[out->length + i] = append.buffer[i];
     return *out;
 }
@@ -56,29 +58,25 @@ string StrCatList(alloc alloc, uint count, string* str) {
     
     return ret;
 }
-string StrCut(string* str, uint pos) {
+string StrCut(string* str, sint pos) {
     string ret = StrSub(*str, 0, pos);
-    *str = StrSub(*str, pos, -1);
+    *str = StrSub(*str, pos, str->length - pos);
     return ret;
 }
-string StrSub(string str, uint start, uint length) {
+string StrSub(string str, sint start, sint length) {
+    start  = IntMax(start,  0);
+    length = IntMax(length, 0);
+
     str.buffer += start;
     str.buffer_size = 0;
 
-    if(str.length > start)
-        str.length -= start;
-    else
-        str.length = 0;
-
-    if(str.length > length)
-        str.length = length;
-    
+    str.length = IntClamp(0, str.length - start, length);
     return str;
 }
 
-uint StrFind(string str, string look_for) {
-    for(uint i = 0; i < str.length; i++)
-        for(uint j = 0; str.buffer[i + j] == look_for.buffer[j]; j++)
+sint StrFind(string str, string look_for) {
+    for(sint i = 0; i < str.length; i++)
+        for(sint j = 0; str.buffer[i + j] == look_for.buffer[j]; j++)
             if(look_for.length <= j + 1)
                 return i;
     return str.length;
@@ -87,11 +85,24 @@ bool StrIsEqual(string a, string b) {
     if(a.length != b.length)
         return false;
     
-    for(uint i = 0; i < a.length; i++)
+    for(sint i = 0; i < a.length; i++)
         if(a.buffer[i] != b.buffer[i])
             return false;
     
     return true;
+}
+
+
+slong IntMin(slong a, slong b) {
+    return a < b ? a : b;
+}
+slong IntMax(slong a, slong b) {
+    return a > b ? a : b;
+}
+slong IntClamp(slong min, slong val, slong max) {
+    val = IntMin(val, max);
+    val = IntMax(val, min);
+    return val;
 }
 
 
