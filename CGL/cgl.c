@@ -284,9 +284,9 @@ void draw_spr(sprite out, sprite in) {
 }
 void draw_text(sprite out, cstr text, text_set* settings) {
     pixel color = settings->color;
-    font* used_font = &settings->font;
+    font* used_font = settings->font;
 
-    if(!used_font->line_height) {
+    if(!used_font) {
         used_font = &(font){
             .line_height = 7,
             .letter = {

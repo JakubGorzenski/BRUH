@@ -90,7 +90,7 @@ typedef struct {
     bool  debug_color;
 } cgl_set;
 typedef struct {
-    font  font;
+    font* font;
     pixel color;
     bool  wrap;
     bool  process_special;
