@@ -74,6 +74,7 @@ void internal_bruh_startup(int heap_start_in_pages, int heap_size_in_pages) {
 v_EXPORT
 int _start(int delta_ms) {
     static sint state = 0;
+    v.MemTemp_ptr = 0;
 
     v.bruh.delta_ms = delta_ms;
     {   //  key_mod update
