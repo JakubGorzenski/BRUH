@@ -198,9 +198,8 @@ pixel Rgb(uint rgb);
 v2di v2diMin(v2di a, v2di b);
 v2di v2diMax(v2di a, v2di b);
 v2di v2diClamp(v2di min, v2di val, v2di max);
-
-bool v2di_equal(v2di a, v2di b);
-bool is_inside(v2di p, v2di pos, v2di size);
+bool v2diIsEqual(v2di a, v2di b);
+bool v2diIsInside(v2di p, v2di pos, v2di size);
 
 
 sprite SprMove(sprite spr, v2di pos);

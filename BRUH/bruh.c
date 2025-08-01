@@ -34,8 +34,10 @@ v2di v2diClamp(v2di min, v2di val, v2di max) {
     val = v2diMax(val, min);
     return val;
 }
-
-bool is_inside(v2di p, v2di pos, v2di size) {
+bool v2diIsEqual(v2di a, v2di b) {
+    return (a.x == a.b) && (a.y == b.y);
+}
+bool v2diIsInside(v2di p, v2di pos, v2di size) {
     p = v2diVV(p, -, pos);
 
     if(v2diVN(p, <, 0).all_bits || v2diVV(p, >=, size).all_bits)
@@ -88,7 +90,7 @@ sprite SprCutB(sprite* spr, sint cut_by) {
 
 
 void draw_pixel(sprite out, v2di pos, pixel color) {
-    if(is_inside(pos, out.start, out.size)) {
+    if(v2diIsInside(pos, out.start, out.size)) {
         GET_PIXEL(out, pos.x, pos.y) = color;
     }
 }
