@@ -45,6 +45,8 @@ string StrAppend(string* out, string append) {
 
     for(sint i = 0; i < size; i++)
         out->buffer[out->length + i] = append.buffer[i];
+    out->length += size;
+
     return *out;
 }
 string StrCatList(alloc alloc, uint count, string* str) {
