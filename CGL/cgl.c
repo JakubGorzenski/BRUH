@@ -1,8 +1,8 @@
 /*  ENGINE FUNCTIONS  */
 #ifdef _WIN64
-    #include "bruh_win.c"
+    #include "cgl_win.c"
 #elif __wasm__
-    #include "bruh_wasm.c"
+    #include "cgl_wasm.c"
 #endif
 
 

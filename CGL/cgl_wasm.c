@@ -1,16 +1,16 @@
 /*  JS + WASM WRAPPERS  */
-#include "bru.h"
+#include "cgl.h"
 
 
 
-#define v_PAGE_HEADER internal_bruh_page_header
+#define v_PAGE_HEADER internal_cgl_page_header
 typedef struct v_PAGE_HEADER {
     uint size;
     struct v_PAGE_HEADER* next;
 } v_PAGE_HEADER;
 
 
-#define v internal_bruh
+#define v internal_cgl
 struct {
     //  file_
 
@@ -23,10 +23,10 @@ struct {
     uchar* MemTemp_buffer;
     ulong  MemTemp_size;
     ulong  MemTemp_ptr;
-    //  bruh_
-    bruh bruh;
+    //  cgl_
+    cgl cgl;
     sprite screen;
-    bruh_set set;
+    cgl_set set;
     //sint msg_to_user;   //  not used currently
 } v = {
     .page_size = 0x110,
@@ -45,13 +45,13 @@ void* memset(void* ptr, int value, unsigned long num) {
 
 
 //  functions from JS
-void internal_bruh_test(int log);
+void internal_cgl_test(int log);
 
-void internal_bruh_startup_js(sint* buffer, int buffer_size);
+void internal_cgl_startup_js(sint* buffer, int buffer_size);
 
-void internal_bruh_resize(sint w, sint h);
+void internal_cgl_resize(sint w, sint h);
 
-void internal_bruh_output(pixel* buffer, sint w, sint h);
+void internal_cgl_output(pixel* buffer, sint w, sint h);
 
 
 
@@ -59,13 +59,13 @@ void internal_bruh_output(pixel* buffer, sint w, sint h);
 #define v_EXPORT __attribute__((visibility("default")))
 
 v_EXPORT
-void internal_bruh_startup(int heap_start_in_pages, int heap_size_in_pages) {
+void internal_cgl_startup(int heap_start_in_pages, int heap_size_in_pages) {
     v.memory = (v_PAGE_HEADER*)(heap_start_in_pages * 65536);
 
     v.memory[0] = (v_PAGE_HEADER){.next = &v.memory[1]};
     v.memory[1] = (v_PAGE_HEADER){.size = heap_size_in_pages * 65536 - sizeof(v_PAGE_HEADER)};
     
-    internal_bruh_startup_js(v.bruh.in, 128);
+    internal_cgl_startup_js(v.cgl.in, 128);
 
     //  1 GB for scratch memory (maybe make it dynamically allocated, since we only have 4 GB on wasm)
     v.MemTemp_buffer = MemGet(1024 * 1024);
@@ -76,47 +76,47 @@ int _start(int delta_ms) {
     static sint state = 0;
     v.MemTemp_ptr = 0;
 
-    v.bruh.delta_ms = delta_ms;
+    v.cgl.delta_ms = delta_ms;
     {   //  key_mod update
-    v.bruh.in[KEY_Mod] = 0;
-    v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Shift] > 0 ? KEY_Shift : 0;
-    v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Ctrl] > 0 ? KEY_Ctrl : 0;
-    v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Alt] > 0 ? KEY_Alt : 0;
+    v.cgl.in[KEY_Mod] = 0;
+    v.cgl.in[KEY_Mod] |= v.cgl.in[KEY_Shift] > 0 ? KEY_Shift : 0;
+    v.cgl.in[KEY_Mod] |= v.cgl.in[KEY_Ctrl] > 0 ? KEY_Ctrl : 0;
+    v.cgl.in[KEY_Mod] |= v.cgl.in[KEY_Alt] > 0 ? KEY_Alt : 0;
     }
     {   //  run user code
-    v.bruh.screen = v.screen;
+    v.cgl.screen = v.screen;
     sint state_out = 0;
     /*if(v.msg_to_user) {
-        state_out = bruh_main(&v.bruh, v.msg_to_user);
+        state_out = cgl_main(&v.cgl, v.msg_to_user);
         v.msg_to_user = 0;
     }*/
     if(!state_out)
-        state_out = bruh_main(&v.bruh, state);
+        state_out = cgl_main(&v.cgl, state);
     state = state_out;
     }
     {   //  keyboard update
     for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++) {
-        if(v.bruh.in[i] > 0)
-            v.bruh.in[i] += delta_ms;
+        if(v.cgl.in[i] > 0)
+            v.cgl.in[i] += delta_ms;
         else
-            v.bruh.in[i] = 0;
+            v.cgl.in[i] = 0;
     }
 
-    v.bruh.in[KEY_Pressed] = 0;
-    v.bruh.in[KEY_Text] = 0;
+    v.cgl.in[KEY_Pressed] = 0;
+    v.cgl.in[KEY_Text] = 0;
     }
 
-    internal_bruh_output(v.screen.buffer, v.screen.size.width, v.screen.size.height);
+    internal_cgl_output(v.screen.buffer, v.screen.size.width, v.screen.size.height);
 
     return state;
 }
 v_EXPORT
-void internal_bruh_cleanup(void) {
-    MemFree(v.bruh.screen.buffer);
+void internal_cgl_cleanup(void) {
+    MemFree(v.cgl.screen.buffer);
 
-    MemFree(v.bruh.audio[0].buffer);
-    MemFree(v.bruh.audio[1].buffer);
-    MemFree(v.bruh.audio[2].buffer);
+    MemFree(v.cgl.audio[0].buffer);
+    MemFree(v.cgl.audio[1].buffer);
+    MemFree(v.cgl.audio[2].buffer);
 
     MemFree(v.MemTemp_buffer);
     v.MemTemp_size = 0;
@@ -126,7 +126,7 @@ void internal_bruh_cleanup(void) {
 
 
 //  function definitions
-void bruh_settings(bruh* bruh, bruh_set settings) {
+void cgl_settings(cgl* cgl, cgl_set settings) {
     {   //  set defaults
     #define DEFAULT(setting_name, default) if(!settings.setting_name) v.set.setting_name = default
 
@@ -145,13 +145,13 @@ void bruh_settings(bruh* bruh, bruh_set settings) {
             v.screen.size = v2di(0, 0);
         v.screen.real_width = v.screen.size.w;
     }
-    bruh->screen = v.screen;
+    cgl->screen = v.screen;
 
-    internal_bruh_resize(v.set.resolution.width, v.set.resolution.height);
+    internal_cgl_resize(v.set.resolution.width, v.set.resolution.height);
     }
 }
-bruh_set bruh_available_settings() {
-    return (bruh_set){0};
+cgl_set cgl_available_settings() {
+    return (cgl_set){0};
 }
 
 

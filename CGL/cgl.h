@@ -1,19 +1,19 @@
-/*  BUFFER RENDERING UTILITY  */
+/*  C GAME LIBRARY   */
 //#include <stdint.h>
 
 
-#ifndef BRUH_LIB
-#define BRUH_LIB
+#ifndef CGL_LIB
+#define CGL_LIB
 
 //  macros
-#define BRUH_MAIN(bruh) bruh_main(bruh, sint bruh_state) { switch(bruh_state) case 0:
-#define BRUH_YIELD do {return __LINE__; case __LINE__:} while(0)
-#define BRUH_END return -1; }
+#define CGL_MAIN(cgl) cgl_main(cgl, sint cgl_state) { switch(cgl_state) case 0:
+#define CGL_YIELD do {return __LINE__; case __LINE__:} while(0)
+#define CGL_END return -1; }
 
-#define BRUH_ON_CLOSE case -1
+#define CGL_ON_CLOSE case -1
 
-#define BRUH_ACKNOWLEDGE return 0
-#define BRUH_CLOSE return -1
+#define CGL_ACKNOWLEDGE return 0
+#define CGL_CLOSE return -1
 
 
 #define UNUSED(var) (void)var
@@ -80,10 +80,10 @@ typedef struct {
     uint  fps_cap;
     bool  hide_cursor;
     bool  debug_color;
-} bruh_set;
+} cgl_set;
 
 
-typedef struct bruh {
+typedef struct cgl {
     //  outputs
     sprite screen;
     sound audio[3];
@@ -92,7 +92,7 @@ typedef struct bruh {
     uint delta_ms;
     sint in[128];
     v2di mouse;
-} bruh;
+} cgl;
 
 enum input_key_values {
     KEY_Text,   //  typed in char
@@ -154,9 +154,9 @@ enum input_key_values {
 
 
 
-//  bruh_os.c
-void bruh_settings(bruh* bruh, bruh_set settings);
-//bruh_set bruh_available_settings();  //  implement somthing to allow for platform dependent bechavior
+//  cgl_os.c
+void cgl_settings(cgl* cgl, cgl_set settings);
+//cgl_set cgl_available_settings();  //  implement somthing to allow for platform dependent bechavior
 
 
 
@@ -195,7 +195,7 @@ double time_between_calls_ms(bool set_zero);
 
 
 
-//  bruh.c
+//  cgl.c
 pixel Rgb(uint rgb);
 
 
@@ -243,6 +243,6 @@ void draw_spr(sprite out, sprite in);
 
 
 //  user entry point
-sint bruh_main(bruh* bruh, sint state);
+sint cgl_main(cgl* cgl, sint state);
 
 #endif

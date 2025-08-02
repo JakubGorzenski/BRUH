@@ -72,11 +72,11 @@ var key_translation = {
 };
 
 var importObject = {
-    internal_bruh_test(log) {
+    internal_cgl_test(log) {
         console.log(log);
     },
 
-    internal_bruh_startup_js(keyboard_ptr, kbp_size) {
+    internal_cgl_startup_js(keyboard_ptr, kbp_size) {
         for(i = 1; i <= 12; i++)    //  F1 to F12
             key_translation['F' + i] = 10 + i;
         for(i = 45; i <= 57; i++)   //  - to 9
@@ -111,28 +111,28 @@ var importObject = {
         });
     },
 
-    internal_bruh_resize(w, h) {
+    internal_cgl_resize(w, h) {
         ctx.canvas.width = w;
         ctx.canvas.height = h;
     },
 
-    internal_bruh_output(buffer, w, h) {
-        var bruh_screen = new ImageData(
+    internal_cgl_output(buffer, w, h) {
+        var cgl_screen = new ImageData(
                 new Uint8ClampedArray(
                 memory.subarray(buffer, buffer + w * h * 4)), w, h);
-        ctx.putImageData(bruh_screen, 0, 0);
+        ctx.putImageData(cgl_screen, 0, 0);
     },
 };
 
 
 
-var bruh_main;
-var bruh_cleanup;
+var cgl_main;
+var cgl_cleanup;
 function js_main(ms_time) {
-    if(bruh_main(ms_time) != -1)
+    if(cgl_main(ms_time) != -1)
         requestAnimationFrame(js_main);
     else
-        bruh_cleanup();
+        cgl_cleanup();
 }
 
 
@@ -188,10 +188,10 @@ function start_wasm_if_all_downloads_complete() {
 
         memory = new Uint8Array(res.instance.exports.memory.buffer);
 
-        res.instance.exports.internal_bruh_startup(old_size, new_size - old_size);
+        res.instance.exports.internal_cgl_startup(old_size, new_size - old_size);
 
-        bruh_main = res.instance.exports._start;
-        bruh_cleanup = res.instance.exports.internal_bruh_cleanup;
+        cgl_main = res.instance.exports._start;
+        cgl_cleanup = res.instance.exports.internal_cgl_cleanup;
 
         div.innerHTML =
             "<canvas id='canvas' style='height:100%; image-rendering: pixelated;'></canvas>"
