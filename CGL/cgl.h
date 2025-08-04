@@ -20,8 +20,8 @@
 #define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).real_width])
 
 #define v2di(x, y) (v2di){{(x), (y)}}
-#define v2diVV(a, op, b) (v2di){{(a.x) op (b.x), (a.y) op (b.y)}}
-#define v2diVN(a, op, b) (v2di){{(a.x) op (b), (a.y) op (b)}}
+#define v2diVV(a, op, b) (v2di){{((a).x) op ((b).x), ((a).y) op ((b).y)}}
+#define v2diVN(a, op, b) (v2di){{((a).x) op (b), ((a).y) op (b)}}
 
 #define StrCat(alloc, ...) StrCatList(alloc, sizeof((string[]){__VA_ARGS__})/sizeof(string), (string[]){__VA_ARGS__})
 
@@ -253,7 +253,7 @@ sprite SprCutB(sprite* spr, sint cut_by);
 void draw_pixel(sprite out, v2di pos, pixel color);
 void draw_fill(sprite out, pixel color);
 void draw_spr(sprite out, sprite in);
-void draw_text(sprite out, cstr text, text_set* settings);
+void draw_text(sprite out, v2di* cursor, string text, text_set* settings);
 
 
 

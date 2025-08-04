@@ -282,7 +282,7 @@ void draw_spr(sprite out, sprite in) {
         GET_PIXEL(out, x, y) = GET_PIXEL(in, x, y);
     }
 }
-void draw_text(sprite out, cstr text, text_set* settings) {
+void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
     pixel color = settings->color;
     font* used_font = settings->font;
 
@@ -311,8 +311,49 @@ void draw_text(sprite out, cstr text, text_set* settings) {
         };
     }
 
-    v2di cursor = v2di(0, used_font->line_height);
+    if(!cursor)
+        cursor = &v2di(0, 0);
 
+    for(sint i = 0; i < text.length; i++) {
+        sint ch = text.buffer[i];
+        if(ch <= ' ' || ch > '~') {
+            if(settings->wrap && ch == ' ') {
+                sint word_width = 0;
+                for(sint j = 0; j < text.length; j++) {
+                    char ch = text.buffer[i + j];
+                    if(ch <= ' ' || ch > '~')
+                        break;
+                    word_width += used_font->letter[ch - ' '].width + 1;
+                }
+                if(word_width + cursor->x > out.size.w) {
+                    cursor->x = 0;
+                    cursor->y += used_font->line_height + 1;
+                    continue;
+                }
+            } else if(settings->process_special && ch == '\n') {
+                cursor->x = 0;
+                cursor->y += used_font->line_height + 1;
+            } else
+                continue;
+        }
+            
+        ch -= ' ';
+
+        v2di size = v2di(
+            used_font->letter[ch].width,
+            used_font->letter[ch].offset_y + used_font->line_height
+        );
+        ulong data = used_font->letter[ch].data;
+
+        for(sint y = size.y; data; y--) {
+        for(sint x = size.x - 1; x >= 0; x--) {
+            if(data & 1)
+                draw_pixel(out, v2di(x + cursor->x, y + cursor->y), color);
+            data >>= 1;
+        }}
+        cursor->x += size.w + 1;
+    }
+/*
     for(;*text; text++) {
         if(*text < ' ' || *text > '~')
             continue;
@@ -321,23 +362,24 @@ void draw_text(sprite out, cstr text, text_set* settings) {
         sint offset_y = used_font->letter[*text - ' '].offset_y;
         ulong data    = used_font->letter[*text - ' '].data;
 
-        if(cursor.x + 1 + width < out.size.w) {
+        if(cursor->x + 1 + width < out.size.w) {
             
-            for(sint y = offset_y; data; y--) {
+            for(sint y = offset_y + used_font->line_height; data; y--) {
             for(sint x = width - 1; x >= 0 ; x--) {
                 if(data & 1)
-                    GET_PIXEL(out, x + cursor.x, y + cursor.y) = color;
+                    GET_PIXEL(out, x + cursor->x, y + cursor->y) = color;
                 data >>= 1;
             }}
 
-            cursor.x += 1 + width;
+            cursor->x += 1 + width;
         } else {
             if(!settings->wrap)
                 return;
-            cursor.x = 0;
-            cursor.y += 1 + used_font->line_height;
-            if(cursor.y > out.size.h)
+            cursor->x = 0;
+            cursor->y += 1 + used_font->line_height;
+            if(cursor->y > out.size.h)
                 return;
         }
     }
+*/
 }
