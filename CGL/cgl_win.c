@@ -424,6 +424,8 @@ void  MemFree(void* memory) {
     free(memory);
 }
 void* MemTemp(ulong size) {
+    size = ((size - 1) / sizeof(ulong)) * sizeof(ulong);    //  round up to ulong aligment
+
     if(v.MemTemp_ptr + size > v.MemTemp_size)
         return NULL;
 
