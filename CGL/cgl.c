@@ -28,9 +28,91 @@ string StrC(char* cstr) {
 
     return ret;
 }
-string StrInt(slong n);
-string StrFloat(double f);
-string StrV2di(v2di p);
+string StrInt(slong n) {
+    sint length = 0;
+    slong d = n;
+    if(n < 0) {
+        length++;
+        d = -n;
+    }
+    do {
+        length++;
+        d /= 10;
+    } while(d >= 1);
+
+    string ret = StrNew(MemTemp, length);
+    if(ret.buffer_size) {
+        ret.length = length;
+        if(n < 0) {
+            ret.buffer[0] = '-';
+            n = -n;
+        }
+        do {
+            ret.buffer[--length] = '0' + n % 10;
+            n /= 10;
+        } while(n >= 1);
+    }
+    return ret;
+}
+string StrFloat(double f) {
+    union {
+        double f;
+        ulong ll;
+    } fll = {f};
+    if((fll.ll & 0x7ff0'0000'0000'0000) == 0x7ff0'0000'0000'0000) {
+        if(fll.ll & 0x000f'ffff'ffff'ffff) {
+            if(fll.ll & 0x8000'0000'0000'0000)
+                return StrC("-nan");
+            else
+                return StrC("+nan");
+        } else {
+            if(fll.ll & 0x8000'0000'0000'0000)
+                return StrC("-inf");
+            else
+                return StrC("+inf");
+        }
+    }
+
+    sint length = 0;
+    sint length_frac = 6;
+    double d = f;
+    if(f < 0) {
+        length++;
+        d = -f;
+    }
+    do {
+        length++;
+        d /= 10;
+    } while(d >= 1);
+
+    if(length >= 9)
+        return StrCat(MemTemp, StrFloat(d * 10), StrC("e"), StrInt(length - 1));
+
+    string ret = StrNew(MemTemp, length + length_frac + sizeof(char));
+    if(ret.buffer_size) {
+        ret.length = length;
+        d = f;
+        if(f < 0) {
+            ret.buffer[0] = '-';
+            f = -f;
+            d = -f;
+        }
+        d -= (sint)f;
+        do {
+            ret.buffer[--length] = '0' + (sint)f % 10;
+            f /= 10;
+        } while(f >= 1);
+        ret.buffer[ret.length++] = '.';
+        for(sint i = 0; i < length_frac; i++) {
+            d *= 10;
+            ret.buffer[ret.length++] = '0' + (sint)d % 10;
+        }
+    }
+    return ret;
+}
+string StrV2di(v2di p) {
+    return StrCat(MemTemp, StrC("v2di("), StrInt(p.x), StrC(", "), StrInt(p.y), StrC(")"));
+}
 
 string StrNew(alloc alloc, sint size) {
     if(size <= 0)
@@ -38,7 +120,9 @@ string StrNew(alloc alloc, sint size) {
     string ret = {0};
     ret.buffer = alloc(size);
     ret.buffer_size = size;
-    return ret;
+    if(ret.buffer)
+        return ret;
+    return StrC("");
 }
 string StrAppend(string* out, string append) {
     sint size = IntMin(out->buffer_size - out->length, append.length);
