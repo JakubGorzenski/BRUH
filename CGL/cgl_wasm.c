@@ -34,13 +34,7 @@ struct {
 
 
 
-//  builtin compiler functions
-void* memset(void* ptr, int value, unsigned long num) {
-    for(ulong i = 0; i < num; i++) {
-        ((char*)ptr)[i] = value;
-    }
-    return ptr;
-}
+
 
 
 

@@ -6,7 +6,7 @@ pause
 cls
 
 clang.exe -fuse-ld=lld.exe -g -gcodeview -Wl,/debug,/pdb:a.pdb -o a.exe %1 CGL/cgl.c -std=c23 -Wall -Wextra -pedantic -lole32 -lwinmm -lgdi32 -lksuser
-rem -mwindows
+rem -mwindows -fsanitize=address
 a.exe
 
 goto loop
