@@ -92,8 +92,9 @@ typedef struct {
 typedef struct {
     font* font;
     pixel color;
-    bool  wrap;
     bool  process_special;
+    bool  letter_wrap;
+    bool  word_wrap;
 } text_set;
 
 

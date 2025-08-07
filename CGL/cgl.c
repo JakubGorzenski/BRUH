@@ -400,7 +400,8 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
 
     for(sint i = 0; i < text.length; i++) {
         sint ch = text.buffer[i];
-        if(ch == ' ' && settings->wrap) {
+
+        if(ch == ' ' && settings->word_wrap) {
             sint word_width = 0;
             for(sint j = 1; j < text.length; j++) {
                 char ch = text.buffer[i + j];
@@ -429,6 +430,11 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
             used_font->line_height - used_font->letter[ch].offset_y
         );
         ulong data = used_font->letter[ch].data;
+
+        if(settings->letter_wrap && cursor->x + size.w > out.size.w) {
+            cursor->x = 0;
+            cursor->y += used_font->line_height + 1;
+        }
 
         for(sint y = size.y; data; y--) {
         for(sint x = size.x - 1; x >= 0; x--) {
