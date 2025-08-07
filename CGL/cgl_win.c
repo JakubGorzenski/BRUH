@@ -311,6 +311,8 @@ int main() {
         }
         {   //  wait for frame
         static ulong past_time = 0;
+        static ulong dt_error = 0;
+
         LARGE_INTEGER current_time = {0};
         QueryPerformanceCounter(&current_time);
 
@@ -323,7 +325,9 @@ int main() {
         while((ulong)current_time.QuadPart <= target_time)
             QueryPerformanceCounter(&current_time);
 
-        v.cgl.delta_ms = (slong)(current_time.QuadPart - past_time) * 1000.0 / v.counter_freq;
+        v.cgl.delta_ms = (slong)(current_time.QuadPart - past_time + dt_error) * 1000.0 / v.counter_freq;
+        dt_error += current_time.QuadPart - past_time;
+        dt_error -= v.cgl.delta_ms * v.counter_freq / 1000;
 
         past_time = current_time.QuadPart;
         }
