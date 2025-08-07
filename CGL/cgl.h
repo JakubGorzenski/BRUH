@@ -95,6 +95,7 @@ typedef struct {
     bool  process_special;
     bool  letter_wrap;
     bool  word_wrap;
+    bool  bit_8_inverts;
 } text_set;
 
 

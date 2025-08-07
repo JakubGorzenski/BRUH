@@ -401,10 +401,16 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
     for(sint i = 0; i < text.length; i++) {
         sint ch = text.buffer[i];
 
+        bool invert = false;
+        if(settings->bit_8_inverts)
+            invert = (ch & 0x80) != 0;
+        ch &= 0x7f;
+
         if(ch == ' ' && settings->word_wrap) {
             sint word_width = 0;
             for(sint j = 1; j < text.length; j++) {
                 char ch = text.buffer[i + j];
+                ch &= 0x7f;
                 if(ch <= ' ' || ch > '~')
                     break;
                 word_width += used_font->letter[ch - ' '].width + 1;
@@ -436,41 +442,24 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
             cursor->y += used_font->line_height + 1;
         }
 
-        for(sint y = size.y; data; y--) {
-        for(sint x = size.x - 1; x >= 0; x--) {
-            if(data & 1)
-                draw_pixel(out, v2di(x + cursor->x, y + cursor->y), color);
-            data >>= 1;
-        }}
-        cursor->x += size.w + 1;
-    }
-/*
-    for(;*text; text++) {
-        if(*text < ' ' || *text > '~')
-            continue;
-        
-        sint width    = used_font->letter[*text - ' '].width;
-        sint offset_y = used_font->letter[*text - ' '].offset_y;
-        ulong data    = used_font->letter[*text - ' '].data;
-
-        if(cursor->x + 1 + width < out.size.w) {
-            
-            for(sint y = offset_y + used_font->line_height; data; y--) {
-            for(sint x = width - 1; x >= 0 ; x--) {
+        if(invert) {
+            for(sint y = used_font->line_height; y >= 0; y--) {
+            for(sint x = size.x; x >= 0; x--) {
+                if(v2diIsInside(v2di(x, y), v2di(0, used_font->letter[ch].offset_y - 1), size)) {
+                    if((data & 1) == 0)
+                        draw_pixel(out, v2di(x + cursor->x, y + cursor->y), color);
+                    data >>= 1;
+                } else
+                    draw_pixel(out, v2di(x + cursor->x, y + cursor->y), color);
+            }}
+        } else {
+            for(sint y = size.y; data; y--) {
+            for(sint x = size.x - 1; x >= 0; x--) {
                 if(data & 1)
-                    GET_PIXEL(out, x + cursor->x, y + cursor->y) = color;
+                    draw_pixel(out, v2di(x + cursor->x, y + cursor->y), color);
                 data >>= 1;
             }}
-
-            cursor->x += 1 + width;
-        } else {
-            if(!settings->wrap)
-                return;
-            cursor->x = 0;
-            cursor->y += 1 + used_font->line_height;
-            if(cursor->y > out.size.h)
-                return;
         }
+        cursor->x += size.w + 1;
     }
-*/
 }
