@@ -92,12 +92,12 @@ string StrFloat(double f) {
     if(ret.buffer_size) {
         ret.length = length;
         d = f;
+        d -= (sint)f;
         if(f < 0) {
             ret.buffer[0] = '-';
             f = -f;
-            d = -f;
+            d = -d;
         }
-        d -= (sint)f;
         do {
             ret.buffer[--length] = '0' + (sint)f % 10;
             f /= 10;
