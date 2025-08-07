@@ -283,9 +283,11 @@ void draw_spr(sprite out, sprite in) {
     }
 }
 void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
+    if(!settings)
+        settings = &(text_set){.color = Rgb(0xffffff)};
+
     pixel color = settings->color;
     font* used_font = settings->font;
-
     if(!used_font) {
         used_font = &(font){
             .line_height = 7,
@@ -445,7 +447,7 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
         if(invert) {
             for(sint y = used_font->line_height; y >= 0; y--) {
             for(sint x = size.x; x >= 0; x--) {
-                if(v2diIsInside(v2di(x, y), v2di(0, used_font->letter[ch].offset_y - 1), size)) {
+                if(v2diIsInside(v2di(x, y), v2di(0, 0), v2diVV(size, +, v2di(0, 1)))) {
                     if((data & 1) == 0)
                         draw_pixel(out, v2di(x + cursor->x, y + cursor->y), color);
                     data >>= 1;
