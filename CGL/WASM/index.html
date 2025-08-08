@@ -98,13 +98,13 @@ var importObject = {
             keyboard['?'.charCodeAt(0)] = key_translation[event.key];
             
             if(event.key.length == 1)
-                keyboard[1] = event.key.charCodeAt(0);
+                keyboard['|'.charCodeAt(0)] = event.key.charCodeAt(0);
             if(event.key == "Backspace")
-                keyboard[1] = 8;
+                keyboard['|'.charCodeAt(0)] = 8;
             if(event.key == "Tab")
-                keyboard[1] = 9;
+                keyboard['|'.charCodeAt(0)] = 9;
             if(event.key == "Enter")
-                keyboard[1] = 10;
+                keyboard['|'.charCodeAt(0)] = 10;
         });
         addEventListener("keyup", (event) => {
             keyboard[key_translation[event.key]] = -1;

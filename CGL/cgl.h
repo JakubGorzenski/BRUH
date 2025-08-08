@@ -111,12 +111,11 @@ typedef struct cgl {
 } cgl;
 
 enum input_key_values {
-    KEY_Text,   //  typed in char
-    KEY_Mod,    //  input[KEY_Mod] == KEY_Shift | KEY_Ctrl | KEY_Alt
+    KEY_Mod,                //  0   in[KEY_Mod] == KEY_Shift | KEY_Ctrl | KEY_Alt
 
     KEY_MouseLeft, KEY_MouseMiddle, KEY_MouseRight,
     //KEY_MouseBack,
-    //KEY_MouseForward,     //  6
+    //KEY_MouseForward,     //  5
 
     KEY_Backspace = '\b',   //  8
     KEY_Tab = '\t',         //  9
@@ -166,6 +165,8 @@ enum input_key_values {
                             //  110
 
     KEY_ArrowDown = 'v',    //  118
+
+    KEY_Text = '|',         //  124 typed in char
 };
 
 

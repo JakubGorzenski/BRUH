@@ -1,7 +1,7 @@
 /*  WINDOWS WRAPPERS  */
-#include "cgl.h"
 #include <windows.h>
 #include <stdio.h>
+#include "cgl.h"
 
 
 
@@ -135,25 +135,25 @@ LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) 
         v.cgl.in[KEY_MouseLeft] = 1;
         v.cgl.in[KEY_Pressed] = KEY_MouseLeft;
         return 0;
-    case WM_LBUTTONUP:
+      case WM_LBUTTONUP:
         v.cgl.in[KEY_MouseLeft] = -1;
         return 0;
-    case WM_MBUTTONDOWN:
+      case WM_MBUTTONDOWN:
         v.cgl.in[KEY_MouseMiddle] = 1;
         v.cgl.in[KEY_Pressed] = KEY_MouseMiddle;
         return 0;
-    case WM_MBUTTONUP:
+      case WM_MBUTTONUP:
         v.cgl.in[KEY_MouseMiddle] = -1;
         return 0;
-    case WM_RBUTTONDOWN:
+      case WM_RBUTTONDOWN:
         v.cgl.in[KEY_MouseRight] = 1;
         v.cgl.in[KEY_Pressed] = KEY_MouseRight;
         return 0;
-    case WM_RBUTTONUP:
+      case WM_RBUTTONUP:
         v.cgl.in[KEY_MouseRight] = -1;
         return 0;
     } case WM_KEYDOWN: {
-    case WM_SYSKEYDOWN:
+      case WM_SYSKEYDOWN:
         uchar key = v.key_translation[wParam];
         if(lParam & 1 << 30)
             return 0;
@@ -172,7 +172,7 @@ LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) 
         v.cgl.in[KEY_Pressed] = key;
         return 0;
     } case WM_KEYUP: {
-    case WM_SYSKEYUP:
+      case WM_SYSKEYUP:
         uchar key = v.key_translation[wParam];
         switch(key) {
         case 0:

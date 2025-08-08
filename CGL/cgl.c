@@ -5,6 +5,141 @@
     #include "cgl_wasm.c"
 #endif
 
+<<<<<<< Updated upstream
+=======
+#define v internal_cgl
+static struct {
+    double* sin_table;
+    uint sin_table_last;
+} v;
+
+
+static void internal_cgl_generate_sin_table(uint i1, uint i2, double x1, double x2, double y1, double y2) {
+    uint avg_idx = (i1 + i2) / 2;
+    if(avg_idx == i1 || avg_idx == i2)
+        return;
+    
+    double a = x1 - x2;
+    double b = y1 - y2;
+    a = a > 0 ? a : -a;
+    b = b > 0 ? b : -b;
+
+    double dist = MathSqrt(a * a + b * b);
+    v.sin_table[avg_idx] = a / dist;
+
+    internal_cgl_generate_sin_table(i1,     avg_idx,
+                                    x1,     b / dist,
+                                    y1,     a / dist);
+
+    internal_cgl_generate_sin_table(avg_idx,    i2,
+                                    b / dist,   x2,
+                                    a / dist,   y2);
+}
+static void internal_cgl_init() {
+    static const uint sin_prec = 10;
+
+    v.sin_table_last = (1LL << sin_prec);
+    v.sin_table = MemGet(sizeof(double) * (v.sin_table_last + 1));
+
+    v.sin_table[0] = 0.0;
+    v.sin_table[v.sin_table_last] = 1.0;
+    internal_cgl_generate_sin_table(0,      v.sin_table_last,
+                                    1.0,    0.0,
+                                    0.0,    1.0);
+}
+
+
+
+sint MathFloatType(double f) {
+    union {
+        double f;
+        ulong ll;
+    } fll = {f};
+    if((fll.ll & 0x7ff0'0000'0000'0000) == 0x7ff0'0000'0000'0000) {
+        if(fll.ll & 0x000f'ffff'ffff'ffff) {
+            if(fll.ll & 0x8000'0000'0000'0000)
+                return -2;
+            else
+                return  2;
+        } else {
+            if(fll.ll & 0x8000'0000'0000'0000)
+                return -1;
+            else
+                return  1;
+        }
+    }
+    return 0;
+}
+double MathInf(void) {
+    union {
+        ulong ll;
+        double f;
+    } llf = {0x7ff0'0000'0000'0000};
+    return llf.f;
+}
+double MathNan(void) {
+    union {
+        ulong ll;
+        double f;
+    } llf = {0x7ff8'0000'0000'0001};    //  qNaN
+    return llf.f;
+}
+
+double MathSin(double x) {
+    if(MathFloatType(x))
+        return x;
+
+    x = x > 0.0 ? x : 1.0 - x;
+    ulong table_idx = x * 2.0 * v.sin_table_last;
+    double remainder = x * 2.0 * v.sin_table_last - table_idx;
+
+    sint lower_idx = table_idx % v.sin_table_last;
+    sint lower_idx_quadrant = (ulong)(table_idx / v.sin_table_last) % 4;
+    double lower_bound = MathNan();
+    switch(lower_idx_quadrant) {
+    case 0: lower_bound =  v.sin_table[lower_idx];                    break;
+    case 1: lower_bound =  v.sin_table[v.sin_table_last - lower_idx]; break;
+    case 2: lower_bound = -v.sin_table[lower_idx];                    break;
+    case 3: lower_bound = -v.sin_table[v.sin_table_last - lower_idx]; break;
+    }
+    
+    table_idx += 1;
+    sint upper_idx = table_idx % v.sin_table_last;
+    sint upper_idx_quadrant = (ulong)(table_idx / v.sin_table_last) % 4;
+    double upper_bound = MathNan();
+    switch(upper_idx_quadrant) {
+    case 0: upper_bound =  v.sin_table[upper_idx];                    break;
+    case 1: upper_bound =  v.sin_table[v.sin_table_last - upper_idx]; break;
+    case 2: upper_bound = -v.sin_table[upper_idx];                    break;
+    case 3: upper_bound = -v.sin_table[v.sin_table_last - upper_idx]; break;
+    }
+
+    return lower_bound * (1.0 - remainder) + upper_bound * (remainder);
+}
+double MathCos(double x) {
+    return MathSin(0.5 - x);
+}
+double MathTan(double x) {
+    return MathSin(x) / MathCos(x);
+}
+
+double MathSqrt(double x) {
+    if(MathFloatType(x))
+        return x;
+    if(x < 0.0)
+        return MathNan();
+
+    double ret = x > 1.0 ? x : 1.0;
+    for(double prec = ret * 0.5; prec > 1e-20; prec /= 2) {
+        if(ret * ret > x)
+            ret -= prec;
+        else
+            ret += prec;
+    }
+    return ret;
+}
+
+>>>>>>> Stashed changes
 
 //  fix with spr_move/spr_size ? maybe ?
 //  or remove bc useless?
