@@ -220,6 +220,17 @@ bool v2diIsInside(v2di p, v2di pos, v2di size) {
 }
 
 
+sprite SprNew(alloc alloc, v2di size) {
+    sprite ret = {0};
+    ret.buffer = alloc(size.w * size.h * sizeof(pixel));
+    if(!ret.buffer)
+        return (sprite){0};
+
+    ret.size = size;
+    ret.real_width = size.w;
+    return ret;
+}
+
 sprite SprMove(sprite spr, v2di pos) {
     spr.size = v2diVV(spr.size, -, pos);
     spr.start = v2diMax(v2diVV(spr.start, -, pos), v2di(0, 0));

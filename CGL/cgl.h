@@ -242,6 +242,8 @@ bool v2diIsEqual(v2di a, v2di b);
 bool v2diIsInside(v2di p, v2di pos, v2di size);
 
 
+sprite SprNew(alloc alloc, v2di size);
+
 sprite SprMove(sprite spr, v2di pos);
 sprite SprSize(sprite spr, v2di size);
 sprite SprWin(sprite spr, v2di pos, v2di size);

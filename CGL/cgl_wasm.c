@@ -125,12 +125,7 @@ void cgl_settings(cgl* cgl, cgl_set settings) {
     {   //  update screen size
     if(v.set.resolution.all_bits) {
         MemFree(v.screen.buffer);
-        v.screen.buffer = MemGet(v.set.resolution.w * v.set.resolution.h * sizeof(uint));
-        if(v.screen.buffer)
-            v.screen.size = v.set.resolution;
-        else
-            v.screen.size = v2di(0, 0);
-        v.screen.real_width = v.screen.size.w;
+        v.screen = SprNew(MemGet, v.set.resolution);
     }
     cgl->screen = v.screen;
 

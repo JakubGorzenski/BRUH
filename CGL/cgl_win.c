@@ -115,7 +115,7 @@ LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) 
     if(dbg)
         printf("%x\n", Msg);
     switch (Msg) {
-    case WM_SIZE: {
+      case WM_SIZE: {
         if(v.set.resolution.all_bits) {
             float w_scale = (float)LOWORD(lParam) / (float)v.set.resolution.width;
             float h_scale = (float)HIWORD(lParam) / (float)v.set.resolution.height;
@@ -126,12 +126,7 @@ LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) 
                 .h = HIWORD(lParam) / v.set.scale,
             };
             MemFree(v.screen.buffer);
-            v.screen.buffer = MemGet(new_size.w * new_size.h * sizeof(uint));
-            if(v.screen.buffer)
-                v.screen.size = new_size;
-            else
-                v.screen.size = v2di(0, 0);
-            v.screen.real_width = v.screen.size.w;
+            v.screen = SprNew(MemGet, new_size);
         }
         v.margin.x = (LOWORD(lParam) - v.screen.size.width * v.set.scale) / 2;
         v.margin.y = (HIWORD(lParam) - v.screen.size.height * v.set.scale) / 2;
@@ -379,12 +374,7 @@ void cgl_settings(cgl* cgl, cgl_set settings) {
 
     if(v.set.resolution.all_bits) {
         MemFree(v.screen.buffer);
-        v.screen.buffer = MemGet(v.set.resolution.w * v.set.resolution.h * sizeof(uint));
-        if(v.screen.buffer)
-            v.screen.size = v.set.resolution;
-        else
-            v.screen.size = v2di(0, 0);
-        v.screen.real_width = v.screen.size.w;
+        v.screen = SprNew(MemGet, v.set.resolution);
     }
     cgl->screen = v.screen;
 
