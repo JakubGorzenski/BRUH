@@ -213,14 +213,21 @@ double time_between_calls_ms(bool set_zero);
 
 
 //  cgl.c
-sint MathFloatType(double x)
+
+//  returns:    0 if f is a number
+//  1 if x == +inf
+// -1 if x == -inf
+//  2 if x == +nan
+// -2 if x == -nan
+sint MathFloatType(double f);
+double MathInf(void);
+double MathNan(void);
 
 double MathSin(double x);
 double MathCos(double x);
 double MathTan(double x);
 
 double MathSqrt(double x);
-
 
 
 pixel Rgb(uint rgb);
