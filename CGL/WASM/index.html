@@ -76,7 +76,7 @@ var importObject = {
         console.log(log);
     },
 
-    internal_cgl_startup_js(keyboard_ptr, kbp_size) {
+    internal_cgl_js_init(keyboard_ptr, kbp_size) {
         for(i = 1; i <= 12; i++)    //  F1 to F12
             key_translation['F' + i] = 10 + i;
         for(i = 45; i <= 57; i++)   //  - to 9
@@ -127,12 +127,9 @@ var importObject = {
 
 
 var cgl_main;
-var cgl_cleanup;
 function js_main(ms_time) {
     if(cgl_main(ms_time) != -1)
         requestAnimationFrame(js_main);
-    else
-        cgl_cleanup();
 }
 
 
@@ -188,10 +185,8 @@ function start_wasm_if_all_downloads_complete() {
 
         memory = new Uint8Array(res.instance.exports.memory.buffer);
 
-        res.instance.exports.internal_cgl_startup(old_size, new_size - old_size);
-
+        res.instance.exports.internal_cgl_wasm_init(old_size, new_size - old_size);
         cgl_main = res.instance.exports._start;
-        cgl_cleanup = res.instance.exports.internal_cgl_cleanup;
 
         div.innerHTML =
             "<canvas id='canvas' style='height:100%; image-rendering: pixelated;'></canvas>"

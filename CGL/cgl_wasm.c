@@ -53,13 +53,13 @@ void internal_cgl_output(pixel* buffer, sint w, sint h);
 #define v_EXPORT __attribute__((visibility("default")))
 
 v_EXPORT
-void internal_cgl_startup(int heap_start_in_pages, int heap_size_in_pages) {
+void internal_cgl_wasm_init(int heap_start_in_pages, int heap_size_in_pages) {
     v.memory = (v_PAGE_HEADER*)(heap_start_in_pages * 65536);
 
     v.memory[0] = (v_PAGE_HEADER){.next = &v.memory[1]};
     v.memory[1] = (v_PAGE_HEADER){.size = heap_size_in_pages * 65536 - sizeof(v_PAGE_HEADER)};
     
-    internal_cgl_startup_js(v.cgl.in, 128);
+    internal_cgl_js_init(v.cgl.in, 128);
 
     //  1 GB for scratch memory (maybe make it dynamically allocated, since we only have 4 GB on wasm)
     v.MemTemp_buffer = MemGet(1024 * 1024);
@@ -103,10 +103,6 @@ int _start(int delta_ms) {
     internal_cgl_output(v.screen.buffer, v.screen.size.width, v.screen.size.height);
 
     return state;
-}
-v_EXPORT
-void internal_cgl_cleanup(void) {
-    
 }
 #undef v_EXPORT
 
