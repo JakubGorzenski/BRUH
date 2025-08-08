@@ -10,7 +10,7 @@ typedef struct v_PAGE_HEADER {
 } v_PAGE_HEADER;
 
 
-#define v internal_cgl
+#define v internal_cgl_platform
 struct {
     //  file_
 
@@ -64,6 +64,8 @@ void internal_cgl_wasm_init(int heap_start_in_pages, int heap_size_in_pages) {
     //  1 GB for scratch memory (maybe make it dynamically allocated, since we only have 4 GB on wasm)
     v.MemTemp_buffer = MemGet(1024 * 1024);
     v.MemTemp_size = 1024 * 1024;
+
+    internal_cgl_init();
 }
 v_EXPORT
 int _start(int delta_ms) {

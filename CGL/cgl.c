@@ -1,4 +1,6 @@
-/*  ENGINE FUNCTIONS  */
+/*  PLATFORM INDEPENDENT FUNCTIONS  */
+
+static void internal_cgl_init();
 #ifdef _WIN64
     #include "cgl_win.c"
 #elif __wasm__
@@ -190,22 +192,11 @@ string StrInt(slong n) {
     return ret;
 }
 string StrFloat(double f) {
-    union {
-        double f;
-        ulong ll;
-    } fll = {f};
-    if((fll.ll & 0x7ff0'0000'0000'0000) == 0x7ff0'0000'0000'0000) {
-        if(fll.ll & 0x000f'ffff'ffff'ffff) {
-            if(fll.ll & 0x8000'0000'0000'0000)
-                return StrC("-nan");
-            else
-                return StrC("+nan");
-        } else {
-            if(fll.ll & 0x8000'0000'0000'0000)
-                return StrC("-inf");
-            else
-                return StrC("+inf");
-        }
+    switch(MathFloatType(f)) {
+    case  1: return StrC("+inf");
+    case -1: return StrC("-inf");
+    case  2: return StrC("+nan");
+    case -2: return StrC("-nan");
     }
 
     sint length = 0;
@@ -611,3 +602,5 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
         cursor->x += size.w + 1;
     }
 }
+
+#undef v

@@ -213,6 +213,16 @@ double time_between_calls_ms(bool set_zero);
 
 
 //  cgl.c
+sint MathFloatType(double x)
+
+double MathSin(double x);
+double MathCos(double x);
+double MathTan(double x);
+
+double MathSqrt(double x);
+
+
+
 pixel Rgb(uint rgb);
 
 
