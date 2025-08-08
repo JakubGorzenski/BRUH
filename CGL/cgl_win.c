@@ -536,7 +536,7 @@ double time_between_calls_ms(bool set_zero) {
     QueryPerformanceCounter(&tick);
 
     double ret = (ulong)tick.QuadPart - (ulong)start_tick.QuadPart;
-    ret /= (double)v.counter_freq * 1000.0;
+    ret *= 1000.0 / (double)v.counter_freq;
 
     if(set_zero)
         QueryPerformanceCounter(&start_tick);
