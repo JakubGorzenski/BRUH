@@ -399,13 +399,18 @@ void cgl_settings(cgl* cgl, cgl_set settings) {
 
 
 
-void* MemGet(ulong size) {
+void* MemGet(sint size) {
+    if(size <= 0)
+        return NULL;
     return malloc(size);
 }
 void  MemFree(void* memory) {
     free(memory);
 }
-void* MemTemp(ulong size) {
+void* MemTemp(sint size) {
+    if(size <= 0)
+        return NULL;
+
     size = ((size - 1) / sizeof(ulong) + 1) * sizeof(ulong);    //  round up to ulong aligment
 
     if(v.MemTemp_ptr + size > v.MemTemp_size)

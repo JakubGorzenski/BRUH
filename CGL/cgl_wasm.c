@@ -5,8 +5,8 @@
 
 #define v_PAGE_HEADER internal_cgl_page_header
 typedef struct v_PAGE_HEADER {
-    uint size;
     struct v_PAGE_HEADER* next;
+    sint size;
 } v_PAGE_HEADER;
 
 
@@ -21,8 +21,8 @@ struct {
     v_PAGE_HEADER* memory;
 
     uchar* MemTemp_buffer;
-    ulong  MemTemp_size;
-    ulong  MemTemp_ptr;
+    uint   MemTemp_size;
+    uint   MemTemp_ptr;
     //  cgl_
     cgl cgl;
     sprite screen;
@@ -138,8 +138,8 @@ cgl_set cgl_available_settings() {
 
 
 
-void* MemGet(ulong size) {
-    if(size == 0)
+void* MemGet(sint size) {
+    if(size <= 0)
         return NULL;
 
     v_PAGE_HEADER *priv, *curr = v.memory;
@@ -196,7 +196,10 @@ void  MemFree(void* memory) {
         *curr = (v_PAGE_HEADER){0};
     }
 }
-void* MemTemp(ulong size) {
+void* MemTemp(sint size) {
+    if(size <= 0)
+        return NULL;
+
     size = ((size - 1) / sizeof(ulong) + 1) * sizeof(ulong);    //  round up to ulong aligment
 
     if(v.MemTemp_ptr + size > v.MemTemp_size)

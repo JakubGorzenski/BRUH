@@ -42,7 +42,7 @@ typedef signed   short      sshort;
 typedef signed   int        sint;
 typedef signed   long long  slong;
 
-typedef void*(*alloc)(ulong size);
+typedef void*(*alloc)(sint size);
 
 typedef char*   cstr;
 
@@ -176,9 +176,9 @@ void cgl_settings(cgl* cgl, cgl_set settings);
 
 
 
-void* MemGet(ulong size);
+void* MemGet(sint size);
 void  MemFree(void* memory);
-void* MemTemp(ulong size);
+void* MemTemp(sint size);
 
 
 bool directory_create(cstr path);
