@@ -106,14 +106,7 @@ int _start(int delta_ms) {
 }
 v_EXPORT
 void internal_cgl_cleanup(void) {
-    MemFree(v.cgl.screen.buffer);
-
-    MemFree(v.cgl.audio[0].buffer);
-    MemFree(v.cgl.audio[1].buffer);
-    MemFree(v.cgl.audio[2].buffer);
-
-    MemFree(v.MemTemp_buffer);
-    v.MemTemp_size = 0;
+    
 }
 #undef v_EXPORT
 

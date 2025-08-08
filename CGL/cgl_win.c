@@ -351,23 +351,11 @@ int main() {
         ReleaseDC(v.window, DC);
         }
     }
-    {   //  cgl clean up
-    MemFree(v.cgl.screen.buffer);
-
-    MemFree(v.cgl.audio[0].buffer);
-    MemFree(v.cgl.audio[1].buffer);
-    MemFree(v.cgl.audio[2].buffer);
-    }
     {   //  start clean up
     DestroyWindow(v.window);    //  can error
 
     UnregisterClassA("win_class", GetModuleHandleA(NULL));  //  can error
     UnregisterClassA("win_class_dbg", GetModuleHandleA(NULL));  //  can error
-
-    MemFree(v.exe_path);
-
-    MemFree(v.MemTemp_buffer);
-    v.MemTemp_size = 0;
     }
     return 0;
 }
