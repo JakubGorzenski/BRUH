@@ -23,7 +23,7 @@
 #define v2diVV(a, op, b) (v2di){{((a).x) op ((b).x), ((a).y) op ((b).y)}}
 #define v2diVN(a, op, b) (v2di){{((a).x) op (b), ((a).y) op (b)}}
 
-#define StrCat(alloc, ...) StrCatList(alloc, sizeof((string[]){__VA_ARGS__})/sizeof(string), (string[]){__VA_ARGS__})
+#define STR_CAT(alloc, ...) StrCatList(alloc, sizeof((string[]){__VA_ARGS__})/sizeof(string), (string[]){__VA_ARGS__})
 
 //#define v2df(x, y) (v2f){{x, y}}
 //#define v2dfVV(a, op, b) v2f(a.x op b.x, a.y op b.y)
