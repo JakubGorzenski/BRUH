@@ -228,6 +228,8 @@ string StrCatList(alloc alloc, uint count, string* str);
 string StrCut(string* str, sint pos);
 string StrSub(string str, sint start, sint length);
 
+cstr StrToCstr(string str);
+
 sint StrFind(string str, string look_for);
 bool StrIsEqual(string a, string b);
 

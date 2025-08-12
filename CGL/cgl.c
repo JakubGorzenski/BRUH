@@ -241,10 +241,12 @@ string StrNew(alloc alloc, sint size) {
     if(size <= 0)
         return StrC("");
     string ret = {0};
-    ret.buffer = alloc(size);
+    ret.buffer = alloc(size + 1);   //  space for '\0'
     ret.buffer_size = size;
-    if(ret.buffer)
+    if(ret.buffer) {
+        ret.buffer[ret.buffer_size] = '\0';
         return ret;
+    }
     return StrC("");
 }
 string StrAppend(string* out, string append) {
@@ -281,6 +283,12 @@ string StrSub(string str, sint start, sint length) {
 
     str.length = IntClamp(0, str.length - start, length);
     return str;
+}
+
+cstr StrToCstr(string str) {
+    if(str.buffer[str.length] == '\0')
+        return str.buffer;
+    return STR_CAT(MemTemp, str);
 }
 
 sint StrFind(string str, string look_for) {
