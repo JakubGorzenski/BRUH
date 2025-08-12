@@ -5,8 +5,6 @@
     #include "cgl_wasm.c"
 #endif
 
-<<<<<<< Updated upstream
-=======
 #define v internal_cgl
 static struct {
     double* sin_table;
@@ -139,7 +137,6 @@ double MathSqrt(double x) {
     return ret;
 }
 
->>>>>>> Stashed changes
 
 //  fix with spr_move/spr_size ? maybe ?
 //  or remove bc useless?
@@ -190,22 +187,11 @@ string StrInt(slong n) {
     return ret;
 }
 string StrFloat(double f) {
-    union {
-        double f;
-        ulong ll;
-    } fll = {f};
-    if((fll.ll & 0x7ff0'0000'0000'0000) == 0x7ff0'0000'0000'0000) {
-        if(fll.ll & 0x000f'ffff'ffff'ffff) {
-            if(fll.ll & 0x8000'0000'0000'0000)
-                return StrC("-nan");
-            else
-                return StrC("+nan");
-        } else {
-            if(fll.ll & 0x8000'0000'0000'0000)
-                return StrC("-inf");
-            else
-                return StrC("+inf");
-        }
+    switch(MathFloatType(f)) {
+    case  1: return StrC("+inf");
+    case -1: return StrC("-inf");
+    case  2: return StrC("+nan");
+    case -2: return StrC("-nan");
     }
 
     sint length = 0;
