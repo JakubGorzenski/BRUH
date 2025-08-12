@@ -7,8 +7,6 @@ static void internal_cgl_init();
     #include "cgl_wasm.c"
 #endif
 
-
-
 #define v internal_cgl
 static struct {
     double* sin_table;
