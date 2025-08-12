@@ -209,7 +209,7 @@ string StrFloat(double f) {
     } while(d >= 1);
 
     if(length >= 9)
-        return StrCat(MemTemp, StrFloat(d * 10), StrC("e"), StrInt(length - 1));
+        return STR_CAT(MemTemp, StrFloat(d * 10), StrC("e"), StrInt(length - 1));
 
     string ret = StrNew(MemTemp, length + length_frac + sizeof(char));
     if(ret.buffer_size) {
@@ -234,7 +234,7 @@ string StrFloat(double f) {
     return ret;
 }
 string StrV2di(v2di p) {
-    return StrCat(MemTemp, StrC("v2di("), StrInt(p.x), StrC(", "), StrInt(p.y), StrC(")"));
+    return STR_CAT(MemTemp, StrC("v2di("), StrInt(p.x), StrC(", "), StrInt(p.y), StrC(")"));
 }
 
 string StrNew(alloc alloc, sint size) {
@@ -293,7 +293,7 @@ string StrSub(string str, sint start, sint length) {
 cstr StrToCstr(string str) {
     if(str.buffer[str.length] == '\0')
         return str.buffer;
-    return STR_CAT(MemTemp, str);
+    return STR_CAT(MemTemp, str).buffer;
 }
 
 sint StrFind(string str, string look_for) {
@@ -303,7 +303,7 @@ sint StrFind(string str, string look_for) {
                 return i;
     return str.length;
 }
-sint StrFindLast(string str, string look_for); {
+sint StrFindLast(string str, string look_for) {
     for(sint i = str.length - look_for.length; i >= 0; i--)
         for(sint j = 0; str.buffer[i + j] == look_for.buffer[j]; j++)
             if(look_for.length <= j + 1)

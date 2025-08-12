@@ -30,7 +30,10 @@
 //#define v2dfVN(a, op, b) v2f(a.x op b, a.y op b)
 
 
+#ifndef NULL
 #define NULL (void*)0
+#endif
+
 
 //  data types
 typedef unsigned char       uchar;
@@ -182,10 +185,10 @@ void  MemFree(void* memory);
 void* MemTemp(sint size);
 
 
-string file_load(alloc alloc, sint min_size, string name);
-bool   file_save(string file, string file_name);
+string file_load(alloc alloc, sint min_size, string file_name);
+bool   file_save(string save, string file_name);
 bool   file_append(string append, string file_name);
-bool   file_delete(string name);
+bool   file_delete(string file_name);
 
 
 pixel Rgb3(uchar r, uchar g, uchar b);

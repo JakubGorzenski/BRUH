@@ -8,10 +8,6 @@
 #define v internal_cgl_platform
 static struct {
     //  file_
-    HANDLE open_file;
-
-    //  directory_
-    HANDLE find_handle;
     cstr exe_path;
 
     //  MemTemp
@@ -424,107 +420,65 @@ void* MemTemp(sint size) {
 }
 
 
-string file_load(alloc alloc, sint min_size, string name);
-bool   file_save(string file, string file_name) {
-    if(file_name.length >= MAX_PATH)
+string file_load(alloc alloc, sint min_size, string file_name) {
+    if(file_name.length + 1 >= MAX_PATH)
+        return StrC("");
+    if(file_name.buffer[file_name.length - 1] == '/') { //  directory list
+        return StrC("/\0/\0/");
+    } else {    //  file read
+        HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if(file == INVALID_HANDLE_VALUE)
+            return StrC("");
+
+        LARGE_INTEGER size = {0};
+        if(!GetFileSizeEx(file, &size))
+            return StrC("");
+        if(size.QuadPart >= 0x7fffffff)
+            return StrC("");
+
+        string ret = StrNew(alloc, IntMax(size.QuadPart, min_size));
+        DWORD len;
+        if(!ReadFile(file, ret.buffer, ret.buffer_size, &len, NULL))
+            return StrC("");
+        
+        ret.length = len;
+        return ret;
+    }
+}
+bool   file_save(string save, string file_name) {
+    if(file_name.length + 1 >= MAX_PATH)
         return false;
-    return false;
-}
-bool   file_append(string append, string file_name);
-bool   file_delete(string name) {
-    if(name.length >= MAX_PATH)
+
+    HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(file == INVALID_HANDLE_VALUE)
         return false;
-    name = STR_CAT(MemTemp, name);
-    if(DeleteFile(name) != 0)
-        return false;
-    StrFindLast(name, StrC("/"));
 
-    return 
-}
-
-
-/*
-bool directory_create(cstr name) {
-    return CreateDirectory(name, NULL) != 0;
-}
-bool directory_delete(cstr name) {
-    return RemoveDirectory(name) != 0;
-}
-
-bool directory_open(cstr path) {
-    v.find_handle = NULL;
-    if(path && *path)
-        return SetCurrentDirectory(path);
-    else
-        return SetCurrentDirectory(v.exe_path);
-}
-uint directory_list(uint size, cstr buffer) {
-    WIN32_FIND_DATA find = {0};
-    bool is_file_present;
-
-    if(!v.find_handle) {
-        v.find_handle = FindFirstFile("*", &find);
-        is_file_present = v.find_handle != INVALID_HANDLE_VALUE;
-    } else
-        is_file_present = FindNextFileA(v.find_handle, &find);
-
-    if(!is_file_present)
-        find.cFileName[0] = '\0';
-
-    uint i = 0;
-    do {
-        if(i < size)
-            buffer[i] = find.cFileName[i];
-    } while(find.cFileName[i++]);
-    buffer[size - 1] = '\0';
-
-    if(i > size)
-        return i;
-    else
-        return 0;
-}
-
-bool file_create(cstr name) {
-    v.open_file = CreateFile(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-    return v.open_file != INVALID_HANDLE_VALUE;
-}
-bool file_delete(cstr name) {
-    return DeleteFile(name) != 0;
-}
-
-bool file_open(cstr name) {
-    v.open_file = CreateFile(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);  //  can error
-    return v.open_file != INVALID_HANDLE_VALUE;
-}
-void file_close(void) {
-    CloseHandle(v.open_file);
-}
-//void file_swap(void** file);
-
-void  file_move(slong offset) {
-    SetFilePointerEx(v.open_file, (LARGE_INTEGER){.QuadPart = offset}, NULL, FILE_CURRENT);   //  can error
-}
-void* file_read(ulong size, void* buffer) {
-    DWORD bytes_read;
-    ReadFile(v.open_file, buffer, size, &bytes_read, NULL);    //  can error
-    return buffer;
-}
-bool  file_write(ulong size, void* buffer) {
     DWORD bytes_written;
-    return WriteFile(v.open_file, buffer, size, &bytes_written, NULL);    //  can error
+    WriteFile(file, save.buffer, save.length, &bytes_written, NULL);
+    CloseHandle(file);
+    return (slong)bytes_written == (slong)save.length;
+}
+bool   file_append(string append, string file_name) {   //  slow implementation for now
+    if(file_name.length + 1 >= MAX_PATH)
+        return false;
+
+    HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(file == INVALID_HANDLE_VALUE)
+        return false;
+
+    SetFilePointer(file, 0, NULL, FILE_END);
+    DWORD bytes_written;
+    WriteFile(file, append.buffer, append.length, &bytes_written, NULL);
+    CloseHandle(file);
+    return (slong)bytes_written == (slong)append.length;
+}
+bool   file_delete(string file_name) {
+    if(file_name.length + 1 >= MAX_PATH)
+        return false;
+
+    return DeleteFileA(StrToCstr(file_name)) != 0;
 }
 
-ulong FilePos(void) {
-    LARGE_INTEGER pos = {0};
-    SetFilePointerEx(v.open_file, (LARGE_INTEGER){ 0 }, &pos, FILE_CURRENT);
-    return pos.QuadPart;
-}
-ulong FileSize(void) {
-    LARGE_INTEGER size = {0};
-    GetFileSizeEx(v.open_file, &size);
-    return size.QuadPart;
-}
-*/
 
 pixel Rgb3(uchar r, uchar g, uchar b) {
     return (pixel){(r << 16) + (g << 8) + (b << 0)};
