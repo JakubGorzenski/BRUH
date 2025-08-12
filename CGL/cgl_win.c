@@ -423,10 +423,55 @@ void* MemTemp(sint size) {
 string file_load(alloc alloc, sint min_size, string file_name) {
     if(file_name.length + 1 >= MAX_PATH)
         return StrC("");
-    if(file_name.buffer[file_name.length - 1] == '/') { //  directory list
-        return StrC("/\0/\0/");
+
+    while(*file_name.buffer == '/') {
+        file_name.buffer++;
+        file_name.length--;
+        file_name.buffer_size--;
+    }
+
+    if(file_name.length <= 0 || file_name.buffer[file_name.length - 1] == '/') {
+        sint length = -1;
+        cstr find_path = STR_CAT(MemTemp, file_name, StrC("*")).buffer;
+
+        WIN32_FIND_DATA find = {0};
+        HANDLE find_handle = FindFirstFileA(find_path, &find);
+        if(find_handle == INVALID_HANDLE_VALUE)
+            return StrC("");
+
+        do {
+            if(find.cFileName[0] == '.')
+                continue;
+
+            length += file_name.length;
+            length += StrC(find.cFileName).length;
+            if(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                length += 2;
+            else
+                length += 1;
+        } while(FindNextFileA(find_handle, &find));
+
+        string ret = StrNew(alloc, IntMax(length, min_size));
+
+        find_handle = FindFirstFileA(find_path, &find);
+        if(find_handle == INVALID_HANDLE_VALUE)
+            return StrC("");
+
+        do {
+            if(find.cFileName[0] == '.')
+                continue;
+
+            StrAppend(&ret, file_name);
+            StrAppend(&ret, StrC(find.cFileName));
+            if(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                StrAppend(&ret, (string){.buffer = "/", .length = 2});
+            else
+                StrAppend(&ret, (string){.buffer = "", .length = 1});
+        } while(FindNextFileA(find_handle, &find));
+
+        return ret;
     } else {    //  file read
-        HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if(file == INVALID_HANDLE_VALUE)
             return StrC("");
 
@@ -438,8 +483,8 @@ string file_load(alloc alloc, sint min_size, string file_name) {
 
         string ret = StrNew(alloc, IntMax(size.QuadPart, min_size));
         DWORD len;
-        if(!ReadFile(file, ret.buffer, ret.buffer_size, &len, NULL))
-            return StrC("");
+        if(ReadFile(file, ret.buffer, ret.buffer_size, &len, NULL))
+            len = 0;
         
         ret.length = len;
         return ret;
