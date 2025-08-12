@@ -274,6 +274,11 @@ string StrCut(string* str, sint pos) {
     *str = StrSub(*str, pos, str->length - pos);
     return ret;
 }
+string StrCutEnd(string* str, sint pos) {
+    string out = *str;
+    *str = StrCut(&out, pos);
+    return out;
+}
 string StrSub(string str, sint start, sint length) {
     start  = IntMax(start,  0);
     length = IntMax(length, 0);
@@ -297,6 +302,13 @@ sint StrFind(string str, string look_for) {
             if(look_for.length <= j + 1)
                 return i;
     return str.length;
+}
+sint StrFindLast(string str, string look_for); {
+    for(sint i = str.length - look_for.length; i >= 0; i--)
+        for(sint j = 0; str.buffer[i + j] == look_for.buffer[j]; j++)
+            if(look_for.length <= j + 1)
+                return i;
+    return 0;
 }
 bool StrIsEqual(string a, string b) {
     if(a.length != b.length)
