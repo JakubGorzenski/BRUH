@@ -424,6 +424,22 @@ void* MemTemp(sint size) {
 }
 
 
+string file_load(alloc alloc, sint min_size, string name);
+bool   file_save(string file, string file_name) {
+    if(file_name.length >= MAX_PATH)
+        return false;
+    return false;
+}
+bool   file_append(string append, string file_name);
+bool   file_delete(string name) {
+    if(name.length >= MAX_PATH)
+        return false;
+    
+    return DeleteFile(StrToCstr(name)) != 0;
+}
+
+
+/*
 bool directory_create(cstr name) {
     return CreateDirectory(name, NULL) != 0;
 }
@@ -463,7 +479,6 @@ uint directory_list(uint size, cstr buffer) {
     else
         return 0;
 }
-
 
 bool file_create(cstr name) {
     v.open_file = CreateFile(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -505,7 +520,7 @@ ulong FileSize(void) {
     GetFileSizeEx(v.open_file, &size);
     return size.QuadPart;
 }
-
+*/
 
 pixel Rgb3(uchar r, uchar g, uchar b) {
     return (pixel){(r << 16) + (g << 8) + (b << 0)};

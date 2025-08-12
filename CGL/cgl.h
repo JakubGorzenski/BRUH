@@ -182,26 +182,10 @@ void  MemFree(void* memory);
 void* MemTemp(sint size);
 
 
-bool directory_create(cstr path);
-bool directory_delete(cstr path);
-
-bool directory_open(cstr path);
-uint directory_list(uint size, cstr buffer);
-
-
-bool file_create(cstr path);
-bool file_delete(cstr path);
-
-bool file_open(cstr path);
-void file_close(void);
-void file_swap(void** file);
-
-void  file_move(slong offset);
-void* file_read(ulong size, void* buffer);
-bool  file_write(ulong size, void* buffer);
-
-ulong FilePos(void);
-ulong FileSize(void);
+string file_load(alloc alloc, sint min_size, string name);
+bool   file_save(string file, string file_name);
+bool   file_append(string append, string file_name);
+bool   file_delete(string name);
 
 
 pixel Rgb3(uchar r, uchar g, uchar b);
