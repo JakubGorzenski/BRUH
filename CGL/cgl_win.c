@@ -434,8 +434,12 @@ bool   file_append(string append, string file_name);
 bool   file_delete(string name) {
     if(name.length >= MAX_PATH)
         return false;
-    
-    return DeleteFile(StrToCstr(name)) != 0;
+    name = STR_CAT(MemTemp, name);
+    if(DeleteFile(name) != 0)
+        return false;
+    StrFindLast(name, StrC("/"));
+
+    return 
 }
 
 
