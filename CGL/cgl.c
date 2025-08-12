@@ -1,12 +1,14 @@
-/*  ENGINE FUNCTIONS  */
+/*  PLATFORM INDEPENDENT FUNCTIONS  */
+
+static void internal_cgl_init();
 #ifdef _WIN64
     #include "cgl_win.c"
 #elif __wasm__
     #include "cgl_wasm.c"
 #endif
 
-<<<<<<< Updated upstream
-=======
+
+
 #define v internal_cgl
 static struct {
     double* sin_table;
@@ -89,13 +91,13 @@ double MathSin(double x) {
     if(MathFloatType(x))
         return x;
 
-    x = x > 0.0 ? x : 1.0 - x;
-    ulong table_idx = x * 2.0 * v.sin_table_last;
-    double remainder = x * 2.0 * v.sin_table_last - table_idx;
+    x = x > 0.0 ? x : 0.5 - x;
+    ulong table_idx = x * 4.0 * v.sin_table_last;
+    double remainder = x * 4.0 * v.sin_table_last - table_idx;
 
     sint lower_idx = table_idx % v.sin_table_last;
     sint lower_idx_quadrant = (ulong)(table_idx / v.sin_table_last) % 4;
-    double lower_bound = MathNan();
+    double lower_bound;
     switch(lower_idx_quadrant) {
     case 0: lower_bound =  v.sin_table[lower_idx];                    break;
     case 1: lower_bound =  v.sin_table[v.sin_table_last - lower_idx]; break;
@@ -106,7 +108,7 @@ double MathSin(double x) {
     table_idx += 1;
     sint upper_idx = table_idx % v.sin_table_last;
     sint upper_idx_quadrant = (ulong)(table_idx / v.sin_table_last) % 4;
-    double upper_bound = MathNan();
+    double upper_bound;
     switch(upper_idx_quadrant) {
     case 0: upper_bound =  v.sin_table[upper_idx];                    break;
     case 1: upper_bound =  v.sin_table[v.sin_table_last - upper_idx]; break;
@@ -117,7 +119,7 @@ double MathSin(double x) {
     return lower_bound * (1.0 - remainder) + upper_bound * (remainder);
 }
 double MathCos(double x) {
-    return MathSin(0.5 - x);
+    return MathSin(0.25 - x);
 }
 double MathTan(double x) {
     return MathSin(x) / MathCos(x);
@@ -139,7 +141,6 @@ double MathSqrt(double x) {
     return ret;
 }
 
->>>>>>> Stashed changes
 
 //  fix with spr_move/spr_size ? maybe ?
 //  or remove bc useless?
@@ -190,22 +191,11 @@ string StrInt(slong n) {
     return ret;
 }
 string StrFloat(double f) {
-    union {
-        double f;
-        ulong ll;
-    } fll = {f};
-    if((fll.ll & 0x7ff0'0000'0000'0000) == 0x7ff0'0000'0000'0000) {
-        if(fll.ll & 0x000f'ffff'ffff'ffff) {
-            if(fll.ll & 0x8000'0000'0000'0000)
-                return StrC("-nan");
-            else
-                return StrC("+nan");
-        } else {
-            if(fll.ll & 0x8000'0000'0000'0000)
-                return StrC("-inf");
-            else
-                return StrC("+inf");
-        }
+    switch(MathFloatType(f)) {
+    case  1: return StrC("+inf");
+    case -1: return StrC("-inf");
+    case  2: return StrC("+nan");
+    case -2: return StrC("-nan");
     }
 
     sint length = 0;
@@ -611,3 +601,5 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings) {
         cursor->x += size.w + 1;
     }
 }
+
+#undef v

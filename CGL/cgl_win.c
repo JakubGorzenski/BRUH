@@ -5,8 +5,8 @@
 
 
 
-#define v internal_cgl
-struct {
+#define v internal_cgl_platform
+static struct {
     //  file_
     HANDLE open_file;
 
@@ -111,7 +111,7 @@ struct {
 
 bool dbg = false;
 
-LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) {
+static LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) {
     if(dbg)
         printf("%x\n", Msg);
     switch (Msg) {
@@ -251,6 +251,8 @@ int main() {
     //  1 GB for scratch memory
     v.MemTemp_buffer = MemGet(1024 * 1024);
     v.MemTemp_size = 1024 * 1024;
+
+    internal_cgl_init();
     }
     sint state = 0;
     while(state != -1) {
