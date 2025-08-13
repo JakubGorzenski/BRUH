@@ -196,7 +196,7 @@ uint  RgbFrom(pixel p);
 
 
 double time_between_calls_ms(bool set_zero);
-
+void   debug_print(string str);
 
 
 //  cgl.c

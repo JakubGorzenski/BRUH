@@ -6,7 +6,7 @@
 #define v_PAGE_HEADER internal_cgl_page_header
 typedef struct v_PAGE_HEADER {
     struct v_PAGE_HEADER* next;
-    sint size;
+    uint size;
 } v_PAGE_HEADER;
 
 
@@ -39,11 +39,15 @@ struct {
 
 
 //  functions from JS
-void internal_cgl_test(int log);
+void internal_cgl_print(char* str, sint length);
 
-void internal_cgl_startup_js(sint* buffer, int buffer_size);
+void internal_cgl_js_init(sint* buffer, sint buffer_size);
 
-void internal_cgl_resize(sint w, sint h);
+int internal_cgl_file_set_target(char* name, sint length);
+int internal_cgl_file_load(char* buffer);
+int internal_cgl_file_save(char* save, sint length);
+int internal_cgl_file_append(char* append, sint length);
+int internal_cgl_file_delete(void);
 
 void internal_cgl_output(pixel* buffer, sint w, sint h);
 
@@ -126,8 +130,6 @@ void cgl_settings(cgl* cgl, cgl_set settings) {
         v.screen = SprNew(MemGet, v.set.resolution);
     }
     cgl->screen = v.screen;
-
-    internal_cgl_resize(v.set.resolution.width, v.set.resolution.height);
     }
 }
 cgl_set cgl_available_settings() {
@@ -144,9 +146,9 @@ void* MemGet(sint size) {
     size += sizeof(v_PAGE_HEADER);
     size = ((size - 1) / v.page_size + 1) * v.page_size;    //  round up size to v.page_size
 
-    while(curr->size < size) {  //  find node which can fit the allocation
+    while(curr->size < (uint)size) {  //  find node which can fit the allocation
         priv = curr;
-        if(curr)
+        if(curr->next)
             curr = curr->next;
         else
             return NULL;
@@ -209,26 +211,35 @@ void* MemTemp(sint size) {
 }
 
 
-bool directory_create(cstr name);
-bool directory_delete(cstr name);
+string file_load(alloc alloc, sint min_size, string file_name) {
+    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    if(size < 0)
+        return StrC("");
+    
+    string ret = StrNew(alloc, IntMax(size, min_size));
 
-bool directory_open(cstr path);
-uint directory_list(uint size, cstr buffer);
-
-
-bool file_create(cstr name);
-bool file_delete(cstr name);
-
-bool file_open(cstr name);
-void file_close(void);
-//void file_swap(void** file);
-
-void  file_move(slong offset);
-void* file_read(ulong size, void* buffer);
-bool  file_write(ulong size, void* buffer);
-
-ulong FilePos(void);
-ulong FileSize(void);
+    if(internal_cgl_file_load(ret.buffer))
+        ret.length = size;
+    return ret;
+}
+bool   file_save(string save, string file_name) {
+    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    if(size < 0)
+        return false;
+    return !!internal_cgl_file_save(save.buffer, save.length);
+}
+bool   file_append(string append, string file_name) {
+    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    if(size < 0)
+        return false;
+    return !!internal_cgl_file_append(append.buffer, append.length);
+}
+bool   file_delete(string file_name) {
+    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    if(size < 0)
+        return false;
+    return !!internal_cgl_file_delete();
+}
 
 
 pixel Rgb3(uchar r, uchar g, uchar b) {
@@ -241,7 +252,9 @@ uint  RgbFrom(pixel p) {
 
 
 double time_between_calls(bool set_zero);
-
+void   debug_print(string str) {
+    internal_cgl_print(str.buffer, str.length);
+}
 
 
 #undef v

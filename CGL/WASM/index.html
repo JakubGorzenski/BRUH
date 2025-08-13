@@ -12,9 +12,13 @@ div {
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script>
 
+const decode = new TextDecoder("utf-8");
+const encode = new TextEncoder("utf-8");
+
 var ctx = null;
 var all_files = [];
 var memory = null;
+var target_file = {};
 
 var key_translation = {
     ["PrintScreen"] : 23,
@@ -71,9 +75,17 @@ var key_translation = {
     ["NumLock"] : 39,
 };
 
+function save_target_file() {
+    const data = decode.decode(target_file.data);
+    window.localStorage.setItem(target_file.name, data);
+    return 1;
+}
+
 var importObject = {
-    internal_cgl_test(log) {
-        console.log(log);
+    internal_cgl_print(str, length) {
+        var enc = new TextDecoder("utf-8");
+        var str = new Int8Array(memory.buffer, str, length);
+        console.log(enc.decode(str));
     },
 
     internal_cgl_js_init(keyboard_ptr, kbp_size) {
@@ -111,15 +123,45 @@ var importObject = {
         });
     },
 
-    internal_cgl_resize(w, h) {
-        ctx.canvas.width = w;
-        ctx.canvas.height = h;
+    internal_cgl_file_set_target(name, length) {
+        var str = new Int8Array(memory.buffer, name, length);
+
+        target_file.name = decode.decode(str);
+        target_file.data = encode.encode(window.localStorage.getItem(target_file.name));
+        return target_file.data.length;
+    },
+    internal_cgl_file_load(buffer) {
+        for(var i = 0; i < target_file.data.length; i++) {
+            memory[buffer + i] = target_file.data[i];
+        }
+        return save_target_file();
+    },
+    internal_cgl_file_save(save, length) {
+        target_file.data = new Int8Array(length);
+        for(var i = 0; i < length; i++) {
+            target_file.data[i] = memory[save + i];
+        }
+        return save_target_file();
+    },
+    internal_cgl_file_append(append, length) {
+        var concat = new Uint8Array(target_file.data.length + length);
+        concat.set(target_file.data);
+        var app = new Uint8Array(memory.buffer, append, length);
+        concat.set(app, target_file.data.length);
+        target_file.data = concat;
+        return save_target_file();
+    },
+    internal_cgl_file_delete() {
+        window.localStorage.removeItem(target_file.name);
+        return 1;
     },
 
     internal_cgl_output(buffer, w, h) {
         var cgl_screen = new ImageData(
                 new Uint8ClampedArray(
                 memory.subarray(buffer, buffer + w * h * 4)), w, h);
+        ctx.canvas.width = w;
+        ctx.canvas.height = h;
         ctx.putImageData(cgl_screen, 0, 0);
     },
 };
@@ -188,6 +230,7 @@ function start_wasm_if_all_downloads_complete() {
         res.instance.exports.internal_cgl_wasm_init(old_size, new_size - old_size);
         cgl_main = res.instance.exports._start;
 
+        div.style.padding = 0;
         div.innerHTML =
             "<canvas id='canvas' style='height:100%; image-rendering: pixelated;'></canvas>"
         ctx = document.getElementById("canvas").getContext('2d', { alpha: false });
