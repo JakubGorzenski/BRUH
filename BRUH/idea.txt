@@ -1,0 +1,59 @@
+
+
+
+
+string file = file_load("file.txt", 0);
+
+file.buffer == 0
+file.buffer_size == 0
+file.length == 0
+    --> no file
+
+
+
+while(
+    !file_fetch("file1") +
+    !file_fetch("file2") +
+    !file_fetch("file3") +
+    !file_fetch("file4") +
+    !file_fetch("file5")
+)
+    CGL_YIELD;
+
+
+
+// -1 - file not fond
+//  0 - featching
+//  1 - done
+sint file_fetch()
+
+file_loda()
+
+
+
+string *file = file_load(MemTemp, "file_name", size);
+
+file = &StrC("Fetching!");
+
+file.buffer > 0
+file.buffer_size == 0
+file.length > 0
+
+... some yields later ...
+
+    on success:
+file.buffer > 0
+file.buffer_size > 0
+file.length > 0
+
+    on file not found:
+file.buffer > 0
+file.buffer_size > 0
+file.length == 0
+
+
+
+
+while(!file->buffer_size) BRUH_YIELD;
+
+

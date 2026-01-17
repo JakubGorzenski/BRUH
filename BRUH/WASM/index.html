@@ -16,7 +16,7 @@ const decode = new TextDecoder("utf-8");
 const encode = new TextEncoder("utf-8");
 
 var ctx = null;
-var all_files = [];
+var downloaded_files = [];
 var memory = null;
 var target_file = {};
 
@@ -127,7 +127,10 @@ var importObject = {
         var str = new Int8Array(memory.buffer, name, length);
 
         target_file.name = decode.decode(str);
-        target_file.data = encode.encode(window.localStorage.getItem(target_file.name));
+        if(downloaded_files[target_file.name])  //  added, check if works
+            target_file.data = encode.encode(downloaded_files[target_file.name]);
+        else
+            target_file.data = encode.encode(window.localStorage.getItem(target_file.name));
         return target_file.data.length;
     },
     internal_cgl_file_load(buffer) {
@@ -195,7 +198,7 @@ function download(file, is_text) {
         success: (data) => {
             pending_downloads--;
             document.getElementById(file).style.color = "green";
-            all_files[file] = data;
+            downloaded_files[file] = data;
             start_wasm_if_all_downloads_complete();
         }
     };
@@ -217,7 +220,7 @@ function start_wasm_if_all_downloads_complete() {
     document.getElementById('download').style.color = "green";
 
     WebAssembly.instantiate(
-        all_files['game.wasm'],
+        downloaded_files['game.wasm'],
         { env: importObject },
     ).then((res) => {
         var old_size = res.instance.exports.memory.grow(0);
