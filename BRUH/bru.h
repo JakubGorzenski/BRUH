@@ -2,18 +2,18 @@
 //#include <stdint.h>
 
 
-#ifndef CGL_LIB
-#define CGL_LIB
+#ifndef BRUH_LIB
+#define BRUH_LIB
 
 //  macros
-#define CGL_MAIN(cgl) cgl_main(cgl, sint cgl_state) { switch(cgl_state) case 0:
-#define CGL_YIELD do {return __LINE__; case __LINE__:} while(0)
-#define CGL_END return -1; }
+#define BRUH_MAIN(bruh) bruh_main(bruh, sint bruh_state) { switch(bruh_state) case 0:
+#define BRUH_YIELD do {return __LINE__; case __LINE__:} while(0)
+#define BRUH_END return -1; }
 
-#define CGL_ON_CLOSE case -1
+#define BRUH_ON_CLOSE case -1
 
-#define CGL_ACKNOWLEDGE return 0
-#define CGL_CLOSE return -1
+#define BRUH_ACKNOWLEDGE return 0
+#define BRUH_CLOSE return -1
 
 
 #define UNUSED(var) (void)var
@@ -91,7 +91,7 @@ typedef struct {
     uint  fps_cap;
     bool  hide_cursor;
     bool  debug_color;
-} cgl_set;
+} bruh_set;
 typedef struct {
     font* font;
     pixel color;
@@ -102,7 +102,7 @@ typedef struct {
 } text_set;
 
 
-typedef struct cgl {
+typedef struct bruh {
     //  outputs
     sprite screen;
     sound audio[3];
@@ -111,7 +111,7 @@ typedef struct cgl {
     uint delta_ms;
     sint in[128];
     v2di mouse;
-} cgl;
+} bruh;
 
 enum input_key_values {
     KEY_Mod,                //  0   in[KEY_Mod] == KEY_Shift | KEY_Ctrl | KEY_Alt
@@ -174,9 +174,9 @@ enum input_key_values {
 
 
 
-//  cgl_os.c
-void cgl_settings(cgl* cgl, cgl_set settings);
-//cgl_set cgl_available_settings();  //  implement somthing to allow for platform dependent bechavior
+//  bruh_os.c
+void bruh_settings(bruh* bruh, bruh_set settings);
+//bruh_set bruh_available_settings();  //  implement somthing to allow for platform dependent bechavior
 
 
 
@@ -199,7 +199,7 @@ double time_between_calls_ms(bool set_zero);
 void   debug_print(string str);
 
 
-//  cgl.c
+//  bruh.c
 
 //  returns:    0 if f is a number
 //  1 if f == +inf
@@ -271,6 +271,6 @@ void draw_text(sprite out, v2di* cursor, string text, text_set* settings);
 
 
 //  user entry point
-sint cgl_main(cgl* cgl, sint state);
+sint bruh_main(bruh* bruh, sint state);
 
 #endif

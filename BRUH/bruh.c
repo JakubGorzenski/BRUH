@@ -1,20 +1,20 @@
 /*  PLATFORM INDEPENDENT FUNCTIONS  */
 
-static void internal_cgl_init();
+static void internal_bruh_init();
 #ifdef _WIN64
-    #include "cgl_win.c"
+    #include "bruh_win.c"
 #elif __wasm__
-    #include "cgl_wasm.c"
+    #include "bruh_wasm.c"
 #endif
 
-#define v internal_cgl
+#define v internal_bruh
 static struct {
     double* sin_table;
     uint sin_table_last;
 } v;
 
 
-static void internal_cgl_generate_sin_table(uint i1, uint i2, double x1, double x2, double y1, double y2) {
+static void internal_bruh_generate_sin_table(uint i1, uint i2, double x1, double x2, double y1, double y2) {
     uint avg_idx = (i1 + i2) / 2;
     if(avg_idx == i1 || avg_idx == i2)
         return;
@@ -27,15 +27,15 @@ static void internal_cgl_generate_sin_table(uint i1, uint i2, double x1, double 
     double dist = MathSqrt(a * a + b * b);
     v.sin_table[avg_idx] = a / dist;
 
-    internal_cgl_generate_sin_table(i1,     avg_idx,
+    internal_bruh_generate_sin_table(i1,     avg_idx,
                                     x1,     b / dist,
                                     y1,     a / dist);
 
-    internal_cgl_generate_sin_table(avg_idx,    i2,
+    internal_bruh_generate_sin_table(avg_idx,    i2,
                                     b / dist,   x2,
                                     a / dist,   y2);
 }
-static void internal_cgl_init() {
+static void internal_bruh_init() {
     static const uint sin_prec = 10;
 
     v.sin_table_last = (1LL << sin_prec);
@@ -43,7 +43,7 @@ static void internal_cgl_init() {
 
     v.sin_table[0] = 0.0;
     v.sin_table[v.sin_table_last] = 1.0;
-    internal_cgl_generate_sin_table(0,      v.sin_table_last,
+    internal_bruh_generate_sin_table(0,      v.sin_table_last,
                                     1.0,    0.0,
                                     0.0,    1.0);
 }

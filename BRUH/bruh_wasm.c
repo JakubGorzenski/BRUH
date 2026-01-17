@@ -1,16 +1,16 @@
 /*  JS + WASM WRAPPERS  */
-#include "cgl.h"
+#include "bru.h"
 
 
 
-#define v_PAGE_HEADER internal_cgl_page_header
+#define v_PAGE_HEADER internal_bruh_page_header
 typedef struct v_PAGE_HEADER {
     struct v_PAGE_HEADER* next;
     uint size;
 } v_PAGE_HEADER;
 
 
-#define v internal_cgl_platform
+#define v internal_bruh_platform
 struct {
     //  file_
 
@@ -23,10 +23,10 @@ struct {
     uchar* MemTemp_buffer;
     uint   MemTemp_size;
     uint   MemTemp_ptr;
-    //  cgl_
-    cgl cgl;
+    //  bruh_
+    bruh bruh;
     sprite screen;
-    cgl_set set;
+    bruh_set set;
     //sint msg_to_user;   //  not used currently
 } v = {
     .page_size = 0x110,
@@ -39,17 +39,17 @@ struct {
 
 
 //  functions from JS
-void internal_cgl_print(char* str, sint length);
+void internal_bruh_print(char* str, sint length);
 
-void internal_cgl_js_init(sint* buffer, sint buffer_size);
+void internal_bruh_js_init(sint* buffer, sint buffer_size);
 
-int internal_cgl_file_set_target(char* name, sint length);
-int internal_cgl_file_load(char* buffer);
-int internal_cgl_file_save(char* save, sint length);
-int internal_cgl_file_append(char* append, sint length);
-int internal_cgl_file_delete(void);
+int internal_bruh_file_set_target(char* name, sint length);
+int internal_bruh_file_load(char* buffer);
+int internal_bruh_file_save(char* save, sint length);
+int internal_bruh_file_append(char* append, sint length);
+int internal_bruh_file_delete(void);
 
-void internal_cgl_output(pixel* buffer, sint w, sint h);
+void internal_bruh_output(pixel* buffer, sint w, sint h);
 
 
 
@@ -57,56 +57,56 @@ void internal_cgl_output(pixel* buffer, sint w, sint h);
 #define v_EXPORT __attribute__((visibility("default")))
 
 v_EXPORT
-void internal_cgl_wasm_init(int heap_start_in_pages, int heap_size_in_pages) {
+void internal_bruh_wasm_init(int heap_start_in_pages, int heap_size_in_pages) {
     v.memory = (v_PAGE_HEADER*)(heap_start_in_pages * 65536);
 
     v.memory[0] = (v_PAGE_HEADER){.next = &v.memory[1]};
     v.memory[1] = (v_PAGE_HEADER){.size = heap_size_in_pages * 65536 - sizeof(v_PAGE_HEADER)};
     
-    internal_cgl_js_init(v.cgl.in, 128);
+    internal_bruh_js_init(v.bruh.in, 128);
 
     //  1 GB for scratch memory (maybe make it dynamically allocated, since we only have 4 GB on wasm)
     v.MemTemp_buffer = MemGet(1024 * 1024);
     v.MemTemp_size = 1024 * 1024;
 
-    internal_cgl_init();
+    internal_bruh_init();
 }
 v_EXPORT
 int _start(int delta_ms) {
     static sint state = 0;
     v.MemTemp_ptr = 0;
 
-    v.cgl.delta_ms = delta_ms;
+    v.bruh.delta_ms = delta_ms;
     {   //  key_mod update
-    v.cgl.in[KEY_Mod] = 0;
-    v.cgl.in[KEY_Mod] |= v.cgl.in[KEY_Shift] > 0 ? KEY_Shift : 0;
-    v.cgl.in[KEY_Mod] |= v.cgl.in[KEY_Ctrl] > 0 ? KEY_Ctrl : 0;
-    v.cgl.in[KEY_Mod] |= v.cgl.in[KEY_Alt] > 0 ? KEY_Alt : 0;
+    v.bruh.in[KEY_Mod] = 0;
+    v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Shift] > 0 ? KEY_Shift : 0;
+    v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Ctrl] > 0 ? KEY_Ctrl : 0;
+    v.bruh.in[KEY_Mod] |= v.bruh.in[KEY_Alt] > 0 ? KEY_Alt : 0;
     }
     {   //  run user code
-    v.cgl.screen = v.screen;
+    v.bruh.screen = v.screen;
     sint state_out = 0;
     /*if(v.msg_to_user) {
-        state_out = cgl_main(&v.cgl, v.msg_to_user);
+        state_out = bruh_main(&v.bruh, v.msg_to_user);
         v.msg_to_user = 0;
     }*/
     if(!state_out)
-        state_out = cgl_main(&v.cgl, state);
+        state_out = bruh_main(&v.bruh, state);
     state = state_out;
     }
     {   //  keyboard update
     for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++) {
-        if(v.cgl.in[i] > 0)
-            v.cgl.in[i] += delta_ms;
+        if(v.bruh.in[i] > 0)
+            v.bruh.in[i] += delta_ms;
         else
-            v.cgl.in[i] = 0;
+            v.bruh.in[i] = 0;
     }
 
-    v.cgl.in[KEY_Pressed] = 0;
-    v.cgl.in[KEY_Text] = 0;
+    v.bruh.in[KEY_Pressed] = 0;
+    v.bruh.in[KEY_Text] = 0;
     }
 
-    internal_cgl_output(v.screen.buffer, v.screen.size.width, v.screen.size.height);
+    internal_bruh_output(v.screen.buffer, v.screen.size.width, v.screen.size.height);
 
     return state;
 }
@@ -115,7 +115,7 @@ int _start(int delta_ms) {
 
 
 //  function definitions
-void cgl_settings(cgl* cgl, cgl_set settings) {
+void bruh_settings(bruh* bruh, bruh_set settings) {
     {   //  set defaults
     #define DEFAULT(setting_name, default) if(!settings.setting_name) v.set.setting_name = default
 
@@ -129,11 +129,11 @@ void cgl_settings(cgl* cgl, cgl_set settings) {
         MemFree(v.screen.buffer);
         v.screen = SprNew(MemGet, v.set.resolution);
     }
-    cgl->screen = v.screen;
+    bruh->screen = v.screen;
     }
 }
-cgl_set cgl_available_settings() {
-    return (cgl_set){0};
+bruh_set bruh_available_settings() {
+    return (bruh_set){0};
 }
 
 
@@ -212,33 +212,33 @@ void* MemTemp(sint size) {
 
 
 string file_load(alloc alloc, sint min_size, string file_name) {
-    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
     if(size < 0)
         return StrC("");
     
     string ret = StrNew(alloc, IntMax(size, min_size));
 
-    if(internal_cgl_file_load(ret.buffer))
+    if(internal_bruh_file_load(ret.buffer))
         ret.length = size;
     return ret;
 }
 bool   file_save(string save, string file_name) {
-    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
     if(size < 0)
         return false;
-    return !!internal_cgl_file_save(save.buffer, save.length);
+    return !!internal_bruh_file_save(save.buffer, save.length);
 }
 bool   file_append(string append, string file_name) {
-    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
     if(size < 0)
         return false;
-    return !!internal_cgl_file_append(append.buffer, append.length);
+    return !!internal_bruh_file_append(append.buffer, append.length);
 }
 bool   file_delete(string file_name) {
-    sint size = internal_cgl_file_set_target(file_name.buffer, file_name.length);
+    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
     if(size < 0)
         return false;
-    return !!internal_cgl_file_delete();
+    return !!internal_bruh_file_delete();
 }
 
 
@@ -253,7 +253,7 @@ uint  RgbFrom(pixel p) {
 
 double time_between_calls(bool set_zero);
 void   debug_print(string str) {
-    internal_cgl_print(str.buffer, str.length);
+    internal_bruh_print(str.buffer, str.length);
 }
 
 

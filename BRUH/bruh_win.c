@@ -1,11 +1,11 @@
 /*  WINDOWS WRAPPERS  */
 #include <windows.h>
 #include <stdio.h>
-#include "cgl.h"
+#include "bru.h"
 
 
 
-#define v internal_cgl_platform
+#define v internal_bruh_platform
 static struct {
     //  file_
     cstr exe_path;
@@ -15,9 +15,9 @@ static struct {
     ulong  MemTemp_size;
     ulong  MemTemp_ptr;
 
-    //  cgl_
-    cgl cgl;
-    cgl_set set;
+    //  bruh_
+    bruh bruh;
+    bruh_set set;
     sint msg_to_user;
 
     bool cold_start;
@@ -30,7 +30,7 @@ static struct {
     v2di margin;
     uchar key_translation[256];
 } v = {
-    .cgl = (cgl){0},
+    .bruh = (bruh){0},
     .cold_start = true,
     .key_translation = {
         [VK_OEM_3] = '`',
@@ -107,7 +107,7 @@ static struct {
 
 bool dbg = false;
 
-static LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) {
+static LRESULT internal_bruh_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM lParam) {
     if(dbg)
         printf("%x\n", Msg);
     switch (Msg) {
@@ -128,25 +128,25 @@ static LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM l
         v.margin.y = (HIWORD(lParam) - v.screen.size.height * v.set.scale) / 2;
         return 0;
     } case WM_LBUTTONDOWN: {
-        v.cgl.in[KEY_MouseLeft] = 1;
-        v.cgl.in[KEY_Pressed] = KEY_MouseLeft;
+        v.bruh.in[KEY_MouseLeft] = 1;
+        v.bruh.in[KEY_Pressed] = KEY_MouseLeft;
         return 0;
       case WM_LBUTTONUP:
-        v.cgl.in[KEY_MouseLeft] = -1;
+        v.bruh.in[KEY_MouseLeft] = -1;
         return 0;
       case WM_MBUTTONDOWN:
-        v.cgl.in[KEY_MouseMiddle] = 1;
-        v.cgl.in[KEY_Pressed] = KEY_MouseMiddle;
+        v.bruh.in[KEY_MouseMiddle] = 1;
+        v.bruh.in[KEY_Pressed] = KEY_MouseMiddle;
         return 0;
       case WM_MBUTTONUP:
-        v.cgl.in[KEY_MouseMiddle] = -1;
+        v.bruh.in[KEY_MouseMiddle] = -1;
         return 0;
       case WM_RBUTTONDOWN:
-        v.cgl.in[KEY_MouseRight] = 1;
-        v.cgl.in[KEY_Pressed] = KEY_MouseRight;
+        v.bruh.in[KEY_MouseRight] = 1;
+        v.bruh.in[KEY_Pressed] = KEY_MouseRight;
         return 0;
       case WM_RBUTTONUP:
-        v.cgl.in[KEY_MouseRight] = -1;
+        v.bruh.in[KEY_MouseRight] = -1;
         return 0;
     } case WM_KEYDOWN: {
       case WM_SYSKEYDOWN:
@@ -159,13 +159,13 @@ static LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM l
         case KEY_Alt:
         case KEY_Ctrl:
         case KEY_Shift:
-            v.cgl.in[KEY_Mod] |= key;
+            v.bruh.in[KEY_Mod] |= key;
             break;
         default:
             break;
         }
-        v.cgl.in[key] = 1;
-        v.cgl.in[KEY_Pressed] = key;
+        v.bruh.in[key] = 1;
+        v.bruh.in[KEY_Pressed] = key;
         return 0;
     } case WM_KEYUP: {
       case WM_SYSKEYUP:
@@ -176,29 +176,29 @@ static LRESULT internal_cgl_win_proc(HWND win, UINT Msg, WPARAM wParam, LPARAM l
         case KEY_Alt:
         case KEY_Ctrl:
         case KEY_Shift:
-            v.cgl.in[KEY_Mod] &= ~key;
-            if(v.cgl.in[KEY_Mod])
-                v.cgl.in[KEY_Mod] |= 0x70;
+            v.bruh.in[KEY_Mod] &= ~key;
+            if(v.bruh.in[KEY_Mod])
+                v.bruh.in[KEY_Mod] |= 0x70;
             break;
         default:
             break;
         }
-        v.cgl.in[key] = -1;
+        v.bruh.in[key] = -1;
         return 0;
     } case WM_CHAR: {
         switch(wParam) {
         case '\b':
-            v.cgl.in[KEY_Text] = KEY_Backspace;
+            v.bruh.in[KEY_Text] = KEY_Backspace;
             break;
         case '\t':
-            v.cgl.in[KEY_Text] = KEY_Tab;
+            v.bruh.in[KEY_Text] = KEY_Tab;
             break;
         case '\r':
-            v.cgl.in[KEY_Text] = KEY_Enter;
+            v.bruh.in[KEY_Text] = KEY_Enter;
             break;
         default:
             if(wParam >= ' ' && wParam <= '~')
-                v.cgl.in[KEY_Text] = wParam;
+                v.bruh.in[KEY_Text] = wParam;
             break;
         }
         return 0;
@@ -232,7 +232,7 @@ int main() {
 
     WNDCLASSA win_class = {
         .style          = CS_HREDRAW | CS_VREDRAW,
-        .lpfnWndProc    = &internal_cgl_win_proc,
+        .lpfnWndProc    = &internal_bruh_win_proc,
         .hInstance      = GetModuleHandleA(NULL),
         .hCursor        = LoadCursor(NULL, IDC_ARROW),
         .hbrBackground  = CreateSolidBrush(RGB(0, 0, 0)),
@@ -248,20 +248,20 @@ int main() {
     v.MemTemp_buffer = MemGet(1024 * 1024);
     v.MemTemp_size = 1024 * 1024;
 
-    internal_cgl_init();
+    internal_bruh_init();
     }
     sint state = 0;
     while(state != -1) {
         v.MemTemp_ptr = 0;
         {   //  keyboard + msg
-        v.cgl.in[KEY_Pressed] = 0;
-        v.cgl.in[KEY_Text] = 0;
+        v.bruh.in[KEY_Pressed] = 0;
+        v.bruh.in[KEY_Text] = 0;
 
         for(uint i = KEY_MouseLeft; i <= KEY_ArrowDown; i++) {
-            if(v.cgl.in[i] > 0)
-                v.cgl.in[i] += v.cgl.delta_ms;
+            if(v.bruh.in[i] > 0)
+                v.bruh.in[i] += v.bruh.delta_ms;
             else
-                v.cgl.in[i] = 0;
+                v.bruh.in[i] = 0;
         }
 
         MSG msg;
@@ -269,7 +269,7 @@ int main() {
             TranslateMessage(&msg);
             DispatchMessageA(&msg);
         }
-        v.cgl.screen = v.screen;
+        v.bruh.screen = v.screen;
         }
         {   //  mouse position
         POINT p;
@@ -277,15 +277,15 @@ int main() {
         ScreenToClient(v.window, &p);
 
         v2di pc_mouse = v2diVV(p, -, v.margin);
-        v.cgl.mouse = v2diVN(pc_mouse, /, v.set.scale);
-        v.cgl.mouse.x -= pc_mouse.x < 0;
-        v.cgl.mouse.y -= pc_mouse.y < 0;
+        v.bruh.mouse = v2diVN(pc_mouse, /, v.set.scale);
+        v.bruh.mouse.x -= pc_mouse.x < 0;
+        v.bruh.mouse.y -= pc_mouse.y < 0;
 
 
         bool show_cursor = !v.set.hide_cursor;
         if(v2diVN(pc_mouse, <, 0).all_bits)
             show_cursor = true;
-        if(v2diVV(v.cgl.mouse, >=, v.screen.size).all_bits)
+        if(v2diVV(v.bruh.mouse, >=, v.screen.size).all_bits)
             show_cursor = true;
 
         static sint cursor = 0;
@@ -295,11 +295,11 @@ int main() {
         {   //  run user code
         sint state_out = 0;
         if(v.msg_to_user) {
-            state_out = cgl_main(&v.cgl, v.msg_to_user);
+            state_out = bruh_main(&v.bruh, v.msg_to_user);
             v.msg_to_user = 0;
         }
         if(!state_out)
-            state_out = cgl_main(&v.cgl, state);
+            state_out = bruh_main(&v.bruh, state);
         state = state_out;
         }
         {   //  wait for frame
@@ -318,9 +318,9 @@ int main() {
         while((ulong)current_time.QuadPart <= target_time)
             QueryPerformanceCounter(&current_time);
 
-        v.cgl.delta_ms = (slong)(current_time.QuadPart - past_time + dt_error) * 1000.0 / v.counter_freq;
+        v.bruh.delta_ms = (slong)(current_time.QuadPart - past_time + dt_error) * 1000.0 / v.counter_freq;
         dt_error += current_time.QuadPart - past_time;
-        dt_error -= v.cgl.delta_ms * v.counter_freq / 1000;
+        dt_error -= v.bruh.delta_ms * v.counter_freq / 1000;
 
         past_time = current_time.QuadPart;
         }
@@ -355,12 +355,12 @@ int main() {
 
 
 
-void cgl_settings(cgl* cgl, cgl_set settings) {
+void bruh_settings(bruh* bruh, bruh_set settings) {
     {   //  load settings
     #define DEFAULT(setting_name, default) if(!settings.setting_name) v.set.setting_name = default
 
     v.set = settings;
-    DEFAULT(window_title, "cgl_application");
+    DEFAULT(window_title, "bruh_application");
     DEFAULT(scale, 1);
     DEFAULT(fps_cap, 60);
 
@@ -374,7 +374,7 @@ void cgl_settings(cgl* cgl, cgl_set settings) {
         MemFree(v.screen.buffer);
         v.screen = SprNew(MemGet, v.set.resolution);
     }
-    cgl->screen = v.screen;
+    bruh->screen = v.screen;
 
 
     if(v.window)
