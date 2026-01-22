@@ -420,9 +420,14 @@ void* MemTemp(sint size) {
 }
 
 
-string file_load(alloc alloc, sint min_size, string file_name) {
-    if(file_name.length + 1 >= MAX_PATH)
-        return StrC("");
+string* file_load(alloc alloc, sint min_size, string file_name) {
+    static uchar index = 0;
+    static string files[256];
+
+    if(file_name.length + 1 >= MAX_PATH) {
+        files[index] = StrNew(alloc, min_size);
+        return &files[index++];
+    }
 
     while(*file_name.buffer == '/') {
         file_name.buffer++;
@@ -436,8 +441,10 @@ string file_load(alloc alloc, sint min_size, string file_name) {
 
         WIN32_FIND_DATA find = {0};
         HANDLE find_handle = FindFirstFileA(find_path, &find);
-        if(find_handle == INVALID_HANDLE_VALUE)
-            return StrC("");
+        if(find_handle == INVALID_HANDLE_VALUE) {
+            files[index] = StrNew(alloc, min_size);
+            return &files[index++];
+        }
 
         do {
             if(find.cFileName[0] == '.')
@@ -451,77 +458,88 @@ string file_load(alloc alloc, sint min_size, string file_name) {
                 length += 1;
         } while(FindNextFileA(find_handle, &find));
 
-        string ret = StrNew(alloc, IntMax(length, min_size));
+        files[index] = StrNew(alloc, IntMax(length, min_size));
 
         find_handle = FindFirstFileA(find_path, &find);
-        if(find_handle == INVALID_HANDLE_VALUE)
-            return StrC("");
+        if(find_handle == INVALID_HANDLE_VALUE) {
+            files[index] = StrNew(alloc, min_size);
+            return &files[index++];
+        }
 
         do {
             if(find.cFileName[0] == '.')
                 continue;
 
-            StrAppend(&ret, file_name);
-            StrAppend(&ret, StrC(find.cFileName));
+            StrAppend(&files[index], file_name);
+            StrAppend(&files[index], StrC(find.cFileName));
             if(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                StrAppend(&ret, (string){.buffer = "/", .length = 2});
+                StrAppend(&files[index], (string){.buffer = "/", .length = 2});
             else
-                StrAppend(&ret, (string){.buffer = "", .length = 1});
+                StrAppend(&files[index], (string){.buffer = "", .length = 1});
         } while(FindNextFileA(find_handle, &find));
 
-        return ret;
+        return &files[index++];
     } else {    //  file read
         HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if(file == INVALID_HANDLE_VALUE)
-            return StrC("");
+        if(file == INVALID_HANDLE_VALUE){
+            files[index] = StrNew(alloc, min_size);
+            return &files[index++];
+        }
 
         LARGE_INTEGER size = {0};
-        if(!GetFileSizeEx(file, &size))
-            return StrC("");
-        if(size.QuadPart >= 0x7fffffff)
-            return StrC("");
+        if(!GetFileSizeEx(file, &size)) {
+            files[index] = StrNew(alloc, min_size);
+            return &files[index++];
+        }
+        if(size.QuadPart >= 0x7fffffff) {
+            files[index] = StrNew(alloc, min_size);
+            return &files[index++];
+        }
 
-        string ret = StrNew(alloc, IntMax(size.QuadPart, min_size));
+        files[index] = StrNew(alloc, IntMax(size.QuadPart, min_size));
         DWORD len;
-        if(ReadFile(file, ret.buffer, ret.buffer_size, &len, NULL))
+        if(ReadFile(file, files[index].buffer, files[index].buffer_size, &len, NULL))
             len = 0;
         
-        ret.length = len;
-        return ret;
+        files[index].length = len;
+        return &files[index++];
     }
 }
-bool   file_save(string save, string file_name) {
+bool    file_is_fetching(string* file) {
+    return file->length >= file->buffer_size;
+}
+void    file_save(string save, string file_name) {
     if(file_name.length + 1 >= MAX_PATH)
-        return false;
+        return;     //  can error
 
     HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(file == INVALID_HANDLE_VALUE)
-        return false;
+        return;     //  can error
 
     DWORD bytes_written;
     WriteFile(file, save.buffer, save.length, &bytes_written, NULL);
     CloseHandle(file);
-    return (slong)bytes_written == (slong)save.length;
+    (void)((slong)bytes_written == (slong)save.length);   //  can error
 }
-bool   file_append(string append, string file_name) {   //  slow implementation for now
+void    file_append(string append, string file_name) {
     if(file_name.length + 1 >= MAX_PATH)
-        return false;
+        return;     //  can error
 
     HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(file == INVALID_HANDLE_VALUE)
-        return false;
+        return;     //  can error
 
     SetFilePointer(file, 0, NULL, FILE_END);
     DWORD bytes_written;
     WriteFile(file, append.buffer, append.length, &bytes_written, NULL);
     CloseHandle(file);
-    return (slong)bytes_written == (slong)append.length;
+    (void)((slong)bytes_written == (slong)append.length); //  can error
 }
-bool   file_delete(string file_name) {
+void    file_delete(string file_name) {
     if(file_name.length + 1 >= MAX_PATH)
-        return false;
+        return;     //  can error
 
-    return DeleteFileA(StrToCstr(file_name)) != 0;
+    DeleteFileA(StrToCstr(file_name));  //  can error
 }
 
 

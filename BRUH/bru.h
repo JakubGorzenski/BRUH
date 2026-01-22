@@ -6,9 +6,9 @@
 #define BRUH_LIB
 
 //  macros
-#define BRUH_MAIN(bruh) bruh_main(bruh, sint bruh_state) { switch(bruh_state) case 0:
+#define BRUH_MAIN(bruh) sint bruh_main(bruh, sint bruh_state) { switch(bruh_state) case 0:
 #define BRUH_YIELD do {return __LINE__; case __LINE__:} while(0)
-#define BRUH_END return -1; }
+#define BRUH_END default: return bruh_state < -1 ? 0 : -1; }
 
 #define BRUH_ON_CLOSE case -1
 
@@ -16,7 +16,6 @@
 #define BRUH_CLOSE return -1
 
 
-#define UNUSED(var) (void)var
 #define GET_PIXEL(spr, x, y) ((spr).buffer[(x) + (y) * (spr).real_width])
 
 #define v2di(x, y) (v2di){{(x), (y)}}
@@ -51,8 +50,9 @@ typedef char*   cstr;
 
 
 
-typedef struct {uint raw;} pixel;
-
+typedef struct {
+    uint raw;
+} pixel;
 typedef union {
     struct { sint x; sint y; };
     struct { sint w; sint h; };
@@ -185,10 +185,11 @@ void  MemFree(void* memory);
 void* MemTemp(sint size);
 
 
-string file_load(alloc alloc, sint min_size, string file_name);
-bool   file_save(string save, string file_name);
-bool   file_append(string append, string file_name);
-bool   file_delete(string file_name);
+string* file_load(alloc alloc, sint min_size, string file_name);
+bool    file_is_fetching(string *file);
+void    file_save(string save, string file_name);
+void    file_append(string append, string file_name);
+void    file_delete(string file_name);
 
 
 pixel Rgb3(uchar r, uchar g, uchar b);

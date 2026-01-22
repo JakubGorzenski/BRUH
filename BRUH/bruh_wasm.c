@@ -13,6 +13,11 @@ typedef struct v_PAGE_HEADER {
 #define v internal_bruh_platform
 struct {
     //  file_
+    struct {
+        string content;
+        sint min_size;
+        alloc alloc;
+    } files[256];
 
     //  directory_
 
@@ -43,10 +48,12 @@ void internal_bruh_print(char* str, sint length);
 
 void internal_bruh_js_init(sint* buffer, sint buffer_size);
 
-int internal_bruh_file_set_target(char* name, sint length);
-int internal_bruh_file_load(char* buffer);
-int internal_bruh_file_save(char* save, sint length);
-int internal_bruh_file_append(char* append, sint length);
+void internal_bruh_send_name_js(char* name, sint length);
+void internal_bruh_send_buffer_js(char* buffer, sint length);
+
+void internal_bruh_file_load(int index);
+int internal_bruh_file_save(void);
+int internal_bruh_file_append(void);
 int internal_bruh_file_delete(void);
 
 void internal_bruh_output(pixel* buffer, sint w, sint h);
@@ -110,8 +117,25 @@ int _start(int delta_ms) {
 
     return state;
 }
+v_EXPORT
+char* internal_bruh_file_allocate(int index, int size) {
+    alloc alloc = v.files[index].alloc;
+    v.files[index].content = StrNew(alloc, IntMax(v.files[index].min_size, size));
+    if(v.files[index].content.buffer)
+        v.files[index].content.length = size;
+    return v.files[index].content.buffer;
+}
+
 #undef v_EXPORT
 
+
+//  internal functions
+void internal_bruh_send_name(string str) {
+    internal_bruh_send_name_js(str.buffer, str.length);
+}
+void internal_bruh_send_buffer(string str) {
+    internal_bruh_send_buffer_js(str.buffer, str.length);
+}
 
 
 //  function definitions
@@ -211,34 +235,38 @@ void* MemTemp(sint size) {
 }
 
 
-string file_load(alloc alloc, sint min_size, string file_name) {
-    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
-    if(size < 0)
-        return StrC("");
-    
-    string ret = StrNew(alloc, IntMax(size, min_size));
+string* file_load(alloc alloc, sint min_size, string file_name) {
+    static uchar index = 0;
 
-    if(internal_bruh_file_load(ret.buffer))
-        ret.length = size;
-    return ret;
+    internal_bruh_send_name(file_name);
+    internal_bruh_file_load(index);
+
+    v.files[index].content = StrC("Loading...");
+    v.files[index].alloc = alloc;
+    v.files[index].min_size = min_size;
+    return &v.files[index++].content;
 }
-bool   file_save(string save, string file_name) {
-    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
-    if(size < 0)
-        return false;
-    return !!internal_bruh_file_save(save.buffer, save.length);
+bool    file_is_fetching(string *file) {
+    return file->length > file->buffer_size;
 }
-bool   file_append(string append, string file_name) {
-    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
-    if(size < 0)
-        return false;
-    return !!internal_bruh_file_append(append.buffer, append.length);
+void    file_save(string save, string file_name) {
+    if(save.length == 0)
+        file_delete(file_name);
+
+    internal_bruh_send_name(file_name);
+    internal_bruh_send_buffer(save);
+
+    internal_bruh_file_save();
 }
-bool   file_delete(string file_name) {
-    sint size = internal_bruh_file_set_target(file_name.buffer, file_name.length);
-    if(size < 0)
-        return false;
-    return !!internal_bruh_file_delete();
+void    file_append(string append, string file_name) {
+    internal_bruh_send_name(file_name);
+    internal_bruh_send_buffer(append);
+
+    internal_bruh_file_append();
+}
+void    file_delete(string file_name) {
+    internal_bruh_send_name(file_name);
+    internal_bruh_file_delete();
 }
 
 
