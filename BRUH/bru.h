@@ -185,11 +185,12 @@ void  MemFree(void* memory);
 void* MemTemp(sint size);
 
 
-string* file_load(alloc alloc, sint min_size, string file_name);
+string* file_load_p(alloc perm_alloc, sint min_size, string file_name);
 bool    file_is_fetching(string *file);
 void    file_save(string save, string file_name);
 void    file_append(string append, string file_name);
 void    file_delete(string file_name);
+sint    file_in_transfer(void);
 
 
 pixel Rgb3(uchar r, uchar g, uchar b);

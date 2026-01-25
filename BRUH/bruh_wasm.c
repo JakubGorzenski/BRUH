@@ -13,13 +13,12 @@ typedef struct v_PAGE_HEADER {
 #define v internal_bruh_platform
 struct {
     //  file_
-    struct {
+    struct internal_bruh_files {
         string content;
         sint min_size;
         alloc alloc;
-    } files[256];
-
-    //  directory_
+    } files[64];
+    sint file_in_transfer;
 
     //  Mem
     const uint page_size;
@@ -124,6 +123,11 @@ char* internal_bruh_file_allocate(int index, int size) {
     if(v.files[index].content.buffer)
         v.files[index].content.length = size;
     return v.files[index].content.buffer;
+}
+void internal_bruh_file_transfer_complete(void) {
+    v.file_in_transfer--;
+    if(v.file_in_transfer < 0)
+        debug_print(StrC("WARNING: v.file_in_transfer < 0"));
 }
 
 #undef v_EXPORT
@@ -235,16 +239,22 @@ void* MemTemp(sint size) {
 }
 
 
-string* file_load(alloc alloc, sint min_size, string file_name) {
-    static uchar index = 0;
+string* file_load_p(alloc perm_alloc, sint min_size, string file_name) {
+    static uint index = 0;
+    v.file_in_transfer++;
+
+    struct internal_bruh_files* files = &v.files[index++];
+    if(index >= (sizeof(v.files) / sizeof(v.files[0])))
+        index = 0;
 
     internal_bruh_send_name(file_name);
     internal_bruh_file_load(index);
 
-    v.files[index].content = StrC("Loading...");
-    v.files[index].alloc = alloc;
-    v.files[index].min_size = min_size;
-    return &v.files[index++].content;
+    files->content = StrC("Loading...");
+    files->alloc = perm_alloc;
+    files->min_size = min_size;
+
+    return &files->content;
 }
 bool    file_is_fetching(string *file) {
     return file->length > file->buffer_size;
@@ -252,6 +262,7 @@ bool    file_is_fetching(string *file) {
 void    file_save(string save, string file_name) {
     if(save.length == 0)
         file_delete(file_name);
+    v.file_in_transfer++;
 
     internal_bruh_send_name(file_name);
     internal_bruh_send_buffer(save);
@@ -259,10 +270,15 @@ void    file_save(string save, string file_name) {
     internal_bruh_file_save();
 }
 void    file_append(string append, string file_name) {
+    v.file_in_transfer++;
+
     internal_bruh_send_name(file_name);
     internal_bruh_send_buffer(append);
 
     internal_bruh_file_append();
+}
+sint    file_in_transfer(void) {
+    return v.file_in_transfer;
 }
 void    file_delete(string file_name) {
     internal_bruh_send_name(file_name);

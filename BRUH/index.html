@@ -167,6 +167,7 @@ var importObject = {
                 console.error(error);
             }
         }
+        wasm.internal_bruh_file_transfer_complete();
     },
     async internal_bruh_file_save() {
         var names = c_arguments[0].split("/");
@@ -202,6 +203,7 @@ var importObject = {
             alert("BRUH: can't save a file because\n" + error.message);
             console.error(error);
         }
+        wasm.internal_bruh_file_transfer_complete();
     },
     async internal_bruh_file_append() {
         var names = c_arguments[0].split("/");
@@ -232,6 +234,7 @@ var importObject = {
             alert("BRUH: can't append to a file because\n" + error.message);
             console.error(error);
         }
+        wasm.internal_bruh_file_transfer_complete();
     },
     async internal_bruh_file_delete() {
         var names = c_arguments[0].split("/");

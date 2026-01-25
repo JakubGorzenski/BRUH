@@ -5,13 +5,13 @@
 
     TODO:
 
-->  continue adding file stuff in wasm
-->  add file_transfer_remaining()
+->  better file system
+->  change key value from frames to ms
+->  reimplement file listing
 ->  fix StrCatList() size calculation
 ->  make -1 default message response, and -2 close;
 ->  change v2diIsInside() args order ?
 ->  error stack
-->  better file system
 ->  audio_synth()
     > noise / sine / triangle / square / saw tooth
     > LFO ?
@@ -26,6 +26,9 @@
 ->  change main() to MainCRTStartup()
 ->  return flow control to the user ?
 ->  change type* x; to type *x;
+
+X>  make file io async
+X>  add file_transfer_remaining()
 
     IDEAS:
 
@@ -89,10 +92,10 @@ bool internal_bruh_once(void) {
 }
 
 //  https://www.chiark.greenend.org.uk/~sgtatham/mp/
-#define FILE_LOAD(file, alloc, min_size, file_name)
+#define FILE_LOAD(file, perm_alloc, min_size, file_name)
         if(1) {
             internal_bruh_register_handler(__LINE__);
-            file_load(alloc, min_size, file_name);
+            file_load(perm_alloc, min_size, file_name);
         } else
             case __LINE__:
             for(file = internal_bruh_get_file(); internal_bruh_once(); )
