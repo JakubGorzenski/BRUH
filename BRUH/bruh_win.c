@@ -230,7 +230,7 @@ int main() {
     GetCurrentDirectory(file_name_size, v.exe_path);
 
     for(uint i = 0; i < sizeof(v.files)/sizeof(v.files[0]); i++) {
-        v.files[i].overlapped.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);  //  can error
+        v.files[i].overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);  //  can error
         if(!v.files[i].overlapped.hEvent)
             debug_print(StrC("CreateEventA returned NULL!"));
     }
@@ -264,22 +264,6 @@ int main() {
     sint state = 0;
     while(state != -1) {
         v.MemTemp_ptr = 0;
-        {   //  check file io
-        if(v.file_in_transfer != 0) {
-            if(v.file_in_transfer < 0) {
-                debug_print(StrC("WARNING: file_in_transfer < 0"));
-                v.file_in_transfer = 0;
-            } else {
-                for(uint i = 0; i < sizeof(v.files)/sizeof(v.files[0]); i++) {
-                    DWORD wfso = WaitForSingleObject(v.files[i].overlapped.hEvent, 0);
-                    if(!wfso) {
-                        v.file_in_transfer--;
-                        v.files[i].visible = v.files[i].internal;
-                    }
-                }
-            }
-        }
-        }
         {   //  keyboard + msg
         v.bruh.in[KEY_Pressed] = 0;
         v.bruh.in[KEY_Text] = 0;
@@ -318,6 +302,22 @@ int main() {
         static sint cursor = 0;
         if(cursor + 1 != show_cursor)
             cursor = ShowCursor(show_cursor);
+        }
+        {   //  check file io
+        if(v.file_in_transfer != 0) {
+            if(v.file_in_transfer < 0) {
+                debug_print(StrC("WARNING: file_in_transfer < 0"));
+                v.file_in_transfer = 0;
+            } else {
+                for(uint i = 0; i < sizeof(v.files)/sizeof(v.files[0]); i++) {
+                    DWORD wfso = WaitForSingleObject(v.files[i].overlapped.hEvent, 0);
+                    if(!wfso) {
+                        v.file_in_transfer--;
+                        v.files[i].visible = v.files[i].internal;
+                    }
+                }
+            }
+        }
         }
         {   //  run user code
         sint state_out = 0;
@@ -447,134 +447,82 @@ void* MemTemp(sint size) {
 }
 
 
+//  0:  file io success
+//  1:  file io error
+//  2:  no free v.files structs !!!
+sint    internal_bruh_file_io(DWORD dwCreationDisposition, DWORD dwDesiredAccess, alloc perm_alloc, sint min_size, string data, string file_name) {
+    struct internal_bruh_files* files = &v.files[v.file_index];
+
+    if(file_is_fetching(&files->visible))   return 2;
+    if(file_name.length + 1 >= MAX_PATH)    return 1;
+
+    HANDLE file = CreateFileA(StrToCstr(file_name), dwDesiredAccess, 0, NULL, dwCreationDisposition, FILE_FLAG_OVERLAPPED | FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if(file == INVALID_HANDLE_VALUE)        return 1;
+
+    if(dwDesiredAccess == GENERIC_READ) {
+        LARGE_INTEGER size = {0};
+        if(!GetFileSizeEx(file, &size)) {
+            CloseHandle(file);
+            return 1;
+        }
+        if(size.QuadPart >= 0x7fffffff) {
+            CloseHandle(file);
+            return 1;
+        }
+
+        files->visible = StrC("Loading...");
+
+        files->internal = StrNew(perm_alloc, IntMax(size.QuadPart, min_size));
+        files->internal.length = size.QuadPart;
+        ReadFile(file, files->internal.buffer, files->internal.buffer_size, NULL, &files->overlapped);
+    } else {
+        files->visible = StrC("Writing...");
+        WriteFile(file, data.buffer, data.length, NULL, &files->overlapped);
+    }
+    
+    CloseHandle(file);
+    return 0;
+}
 string* file_load_p(alloc perm_alloc, sint min_size, string file_name) {
-    struct internal_bruh_files* files = &v.files[v.file_index++];
-    if(v.file_index >= (sizeof(v.files) / sizeof(v.files[0])))
-        v.file_index = 0;
+    static string error_ret = (string){.buffer = ""};
+    //  allow for directory listing
 
-    if(file_is_fetching(&files->visible)) {
-        static string ret;
-        ret = StrC("");
-        return &ret;
+    string* ret = &v.files[v.file_index].visible;
+    switch(internal_bruh_file_io(OPEN_EXISTING, GENERIC_READ, perm_alloc, min_size, StrC(""), file_name)) {
+    case 0:
+        break;
+    case 1:
+        *ret = StrNew(perm_alloc, min_size);
+        break;
+    case 2:
+        return &error_ret;
+    default:
+        debug_print(StrC("ERROR: internal_bruh_file_io returned unhandled value!"));
+        return &error_ret;
     }
-
-    files->visible = StrC("Loading...");
-
-    if(file_name.length + 1 >= MAX_PATH) {
-        files->visible = StrNew(perm_alloc, min_size);
-        return &files->visible;
-    }
-
-    //  TODO:   make path relative only...
-/*  if(file_name.length <= 0 || file_name.buffer[file_name.length - 1] == '/') {    //  directory listing
-        sint length = -1;
-        cstr find_path = STR_CAT(MemTemp, file_name, StrC("*")).buffer;
-
-        WIN32_FIND_DATA find = {0};
-        HANDLE find_handle = FindFirstFileA(find_path, &find);
-        if(find_handle == INVALID_HANDLE_VALUE) {
-            files->visible = StrNew(perm_alloc, min_size);
-            return ret;
-        }
-
-        do {
-            if(find.cFileName[0] == '.')
-                continue;
-
-            length += file_name.length;
-            length += StrC(find.cFileName).length;
-            if(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                length += 2;
-            else
-                length += 1;
-        } while(FindNextFileA(find_handle, &find));
-
-        files->visible = StrNew(perm_alloc, IntMax(length, min_size));
-
-        find_handle = FindFirstFileA(find_path, &find);
-        if(find_handle == INVALID_HANDLE_VALUE) {
-            files->visible = StrNew(perm_alloc, min_size);
-            return ret;
-        }
-
-        do {
-            if(find.cFileName[0] == '.')
-                continue;
-
-            StrAppend(ret, file_name);
-            StrAppend(ret, StrC(find.cFileName));
-            if(find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                StrAppend(ret, (string){.buffer = "/", .length = 2});
-            else
-                StrAppend(ret, (string){.buffer = "", .length = 1});
-        } while(FindNextFileA(find_handle, &find));
-
-        FindClose(find_handle);
-
-        return ret;
-    } else {    //  file read
-    */
-
-    HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_ATTRIBUTE_NORMAL, NULL);
-    if(file == INVALID_HANDLE_VALUE){
-        files->visible = StrNew(perm_alloc, min_size);
-        return &files->visible;
-    }
-
-    LARGE_INTEGER size = {0};
-    if(!GetFileSizeEx(file, &size)) {
-        files->visible = StrNew(perm_alloc, min_size);
-        goto return_and_close_handle;
-    }
-    if(size.QuadPart >= 0x7fffffff) {
-        files->visible = StrNew(perm_alloc, min_size);
-        goto return_and_close_handle;
-    }
-
-    files->internal = StrNew(perm_alloc, IntMax(size.QuadPart, min_size));
-    files->internal.length = size.QuadPart;
-    ReadFile(file, files->internal.buffer, files->internal.buffer_size, NULL, &files->overlapped);
-
-
+    
     v.file_in_transfer++;
-
-return_and_close_handle:    //  change to bool?
-    CloseHandle(file);  //  ok bc kernel keeps handle open until async io finishes
-    return &files->visible;
+    if(++v.file_index >= (sizeof(v.files) / sizeof(v.files[0])))
+        v.file_index = 0;
+    return ret;
 }
 bool    file_is_fetching(string* file) {
     return file->length > file->buffer_size;
 }
-void    file_save(string save, string file_name) {
-    if(file_name.length + 1 >= MAX_PATH)
-        return;     //  can error
-
-    HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(file == INVALID_HANDLE_VALUE)
-        return;     //  can error
-
-    DWORD bytes_written;
-    WriteFile(file, save.buffer, save.length, &bytes_written, NULL);
-    CloseHandle(file);
-    (void)((slong)bytes_written == (slong)save.length);   //  can error
-}
-void    file_append(string append, string file_name) {
-    if(file_name.length + 1 >= MAX_PATH)
-        return;     //  can error
-
-    HANDLE file = CreateFileA(StrToCstr(file_name), GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(file == INVALID_HANDLE_VALUE) {
-        debug_print(StrC("failed to open file!"));
-        DWORD err = GetLastError();
-        debug_print(StrInt(err));
-        return;     //  can error
+void    file_save_p(string save, string file_name) {
+    if(!internal_bruh_file_io(CREATE_ALWAYS, GENERIC_WRITE, NULL, 0, save, file_name)) {
+        v.file_in_transfer++;
+        if(++v.file_index >= (sizeof(v.files) / sizeof(v.files[0])))
+            v.file_index = 0;
     }
-
-    SetFilePointer(file, 0, NULL, FILE_END);
-    DWORD bytes_written;
-    WriteFile(file, append.buffer, append.length, &bytes_written, NULL);
-    CloseHandle(file);
-    (void)((slong)bytes_written == (slong)append.length); //  can error
+}
+void    file_append_p(string append, string file_name) {
+    if(!internal_bruh_file_io(OPEN_ALWAYS, FILE_APPEND_DATA, NULL, 0, append, file_name)) {
+        v.file_in_transfer++;
+        if(++v.file_index >= (sizeof(v.files) / sizeof(v.files[0])))
+            v.file_index = 0;
+    }
 }
 void    file_delete(string file_name) {
     if(file_name.length + 1 >= MAX_PATH)
